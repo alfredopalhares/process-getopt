@@ -1,0 +1,50 @@
+#!/bin/sh
+
+PROG=$(basename $0)
+VERSION=1
+usage() { :; }
+
+source process-getopt
+export VERSION=`process_getopt_version`
+export CVSVERSION=`echo $VERSION | sed -e 's/\./_/g'`
+export BASE=`pwd`
+
+echo "Preparation before running this script in anger:
+<QUOTE>
+as bhepple:
+cvs tag process-getopt-${CVSVERSION}
+cd /tmp
+rm -rf process-getopt
+# cvs -d :ext:bhepple@raita:/opt/cvsroot co -r process-getopt-${CVSVERSION} process-getopt
+cvs -z9 -d :ext:bhepple@process-getopt.cvs.sourceforge.net:/cvsroot/process-getopt co -r process-getopt-${CVSVERSION} process-getopt
+cd process-getopt
+</QUOTE>
+
+This is not ready for general use - I (bhepple) use it to get releases ready.
+Press enter to continue or ^C:
+"
+
+read P
+
+DIR=process-getopt-$VERSION
+rm -rf $DIR
+mkdir -p $DIR/share/man/man1 $DIR/bin
+
+SCRIPTS="process-getopt"
+MANS="process-getopt.1"
+
+cp -p README $DIR/README
+cp -p INSTALL $DIR/INSTALL
+cp -p COPYING ChangeLog AUTHORS $DIR/
+
+sed -e "s/X\.X/$VERSION/g" <process-getopt.spec >$DIR/process-getopt.spec
+cp -p $SCRIPTS $DIR/bin/
+cp -p $MANS $DIR/share/man/man1
+
+tar czf ${DIR}.tgz $DIR
+
+cp -f process-getopt-${VERSION}.tgz ~/public_html/process-getopt
+cp -f process-getopt-${VERSION}.ebuild ~/public_html/process-getopt
+
+echo "To upload (already in ~/public_html/process-getopt):"
+echo "scp process-getopt-${VERSION}.tgz bhepple.freeshell.org:html/process-getopt"
