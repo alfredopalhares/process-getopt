@@ -1,0 +1,580 @@
+# -*- shell-script -*-
+
+# Copyright 2008 Bob Hepple
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# http://bhepple.freeshell.org
+# $Id: process-getopt,v 1.1 2008/08/15 12:19:59 bhepple Exp $
+
+# A wrapper around getopt.
+
+# It buys you:
+# o all the goodness of getopt
+# o define options in one central place together with descriptions. 
+# o fewer 'magic' and duplicated values in your code
+# o Better consistency between the getopt calling parameters, the case
+#   statement processing the user's options and the help/man pages
+# o less spaghetti in your own code
+# o easier to maintain
+# o help-page and man-page printing - all from the same data sources
+# o checking of option consistency at runtime
+# o pretty easy to use
+# o portable to OS's without long option support - the help page
+#   adapts too
+
+# It's easier to see it in an example than to read an explanation, so 
+# look at boilerplate first, and then come back here if you want the 
+# explanation. Also see the man page process-getopt(1).
+#
+# 1. define these:
+# PROG=$(basename $0)
+# VERSION="1.0"
+# SHORT_DESC="one liner for man page"
+# ARGUMENTS="foobar barfoo [ files ] [ more-args ]"
+# USAGE="\
+# usage string - for help page and man page - can be quite long
+# "
+# usage() {
+#    echo "Usage: $PROG [ OPTIONS ] $ARGUMENTS"
+#    echo "$USAGE"
+#    echo
+#    echo "Options:"
+# }
+#
+# 2. 'source' this file 
+# PG=$(type process-getopt |cut -d' ' -f 3)
+# [ "$PG" ] || exit 1
+# . $PG
+#
+# 3. define a function for each option - call it FOOBAR_func. It is
+# called by process_opts if the option is present. It is also called
+# by add_opt (with no args) to check that it is there.
+# 
+# FOOBAR_func() { [ "$1" ] && echo "$PROG: got a FOOBAR option"; }
+#
+# 4. define your options by calling add_opt as follows:
+# add_opt FOOBAR "bars the foo and foos the bar" f "foobar" foo "foobar"
+# add_std_opts
+# 
+# 5. call_getopt like this:
+# TEMP=$(call_getopt "$@") || exit 1
+# eval set -- "$TEMP"
+# unset TEMP
+#
+# 6. call process_opts like this:
+# process_opts "$@"; shift "$?"
+#
+# 7. $@ now contains all your non-option arguments
+#
+# Function list:
+# --------------
+#
+# These are the main players: see the code for more doco
+#
+# add_opt - add an option
+# add_std_opts - adds help, verbose, version & print-man-page options
+# call_getopt - assembles the option lists and calls getopt
+# process_opts - calls your helper functions to process the options
+
+# An internal magic option '--print-man-page' prints a skeleton man page
+# using your option definitions and usage
+
+# Note that options are printed out in the order they were defined by
+# add_opt - and the 'standard' options follow.
+
+# todo:
+# python, c, perl versions of this. ruby? c++? java?
+
+# First some safety checks:
+[ "$PROG" ] || { 
+    PROG=$(basename $0)
+    if [ "$PROG" = "process-getopt" ]; then
+        echo "$PROG: nothing to see here. Please move along." >&2
+    else
+        echo "$PROG: \$PROG not defined, bailing" >&2; 
+    fi
+    exit 1; 
+}
+
+[ "$VERSION" ] || { 
+    echo "$PROG: \$VERSION not defined, bailing" >&2 
+    exit 1
+}
+
+if [ "${!SOPT*}${!LOPT*}${!ARG_OPT*}${!DESC_OPT*}" ]; then
+    echo  >&2 "\
+$PROG: some environment parameters needed by 'process-getopt' are already
+defined:
+${!SOPT*} ${!LOPT*} ${!ARG_OPT*} ${!DESC_OPT*}
+
+it's too dangerous for process-getopt to continue."
+    exit 1
+fi
+
+usage &>/dev/null || {
+    echo "$PROG: the 'usage' function is not defined but is required by" >&2
+    echo "process-getopt." >&2 
+    exit 1
+}
+
+__PG_VERSION="1.0"
+__PG_OPTION_LIST=""
+__PG_LONG_GETOPT=""
+# decide if this getopt supports long options:
+getopt --test &>/dev/null
+__PG_STAT=$?
+[ $__PG_STAT -eq 4 ] && __PG_LONG_GETOPT="yes"
+
+HELP_loption="help"
+HELP_option="h"
+VERBOSE_loption="verbose"
+VERBOSE_option="v"
+VERSION_loption="version"
+VERSION_option="V"
+PRINTMAN_loption="print-man-page"
+FUNC_SUFFIX="_func"
+
+SHORT_OPT_COL=2
+LONG_OPT_COL=6
+OPT_DOC_COL=29
+RMARGIN=79
+
+# The rest of this is functions:
+
+process_getopt_version() {
+    echo "$__PG_VERSION"
+}
+
+add_opt () {
+    # parameters: use "" as the placeholder for a missing arg
+    local NAME="$1" ; shift # name of the option - essential
+    local DESC="$1" ; shift # essential except for 'silent/secret' options
+    local SOPT="$1" ; shift # short option letter - optional
+    local SARG="$1" ; shift # argument label for the short option - optional
+    local LOPT="$1" ; shift # long option - optional
+    local LARG="$1" ; shift # argument label for the long option - optional
+    local A
+    local L
+    local ALLOWED_CHARS='[a-zA-Z0-9_][a-zA-Z0-9_]*'
+    local OPT
+
+    [ "$NAME" ] || { 
+        echo "$PROG: add_opt requires a name" >&2
+        exit 1
+    }
+    [[ "$NAME" =~ $ALLOWED_CHARS ]] || {
+        echo "$PROG: apt_opt: NAME (\"$NAME\") must obey the regexp $ALLOWED_CHARS" >&2
+        exit 1
+    }
+
+    # check at least a short or a long option is given:
+    [ "$SOPT$LOPT" ] || {
+        echo "$PROG: add_opt: option $NAME needs a short or a long option" >&2
+        exit 1
+    }
+
+    # check it's not already in use
+    for OPT in $__PG_OPTION_LIST; do 
+        if [ "$NAME" = "$OPT" ]; then
+            echo "$PROG: option name \"$NAME\" is already in use" >&2
+            exit 1
+        fi
+    done
+
+    # check that a helper function is available:
+    ${NAME}$FUNC_SUFFIX 2>/dev/null; local STAT=$?
+    if [ $STAT -eq 127 ]; then
+        echo "$PROG: option $NAME has no helper function $NAME$FUNC_SUFFIX" >&2
+        exit 1
+    fi
+
+    # force args to be consistent:
+    [ "$LOPT" ] && [ ! "$LARG" ] && LARG="$SARG"
+    [ "$SOPT" ] && [ ! "$SARG" ] && SARG="$LARG"
+
+    [ "$SARG$LARG" ] && A="A" || A=""
+
+    if [ "$SOPT" ]; then
+        # check it's not already in use
+        for OPT in $__PG_OPTION_LIST; do 
+            L="SOPT${A}_$NAME"
+            if [ "$SOPT" = "${!L}" ]; then
+                echo "$PROG: short option \"$SOPT\" is already in use by $OPT" >&2
+                exit 1
+            fi
+        done
+        export SOPT${A}_$NAME="$SOPT"
+        [ "$SARG" ] && export ARG_SOPTA_$NAME="$SARG"
+    fi
+
+    if [ "$LOPT" ]; then
+        # check it's not already in use
+        for OPT in $__PG_OPTION_LIST; do 
+            L="LOPT${A}_$NAME"
+            if [ "$LOPT" = "${!L}" ]; then
+                echo "$PROG: long option \"$LOPT\" is already in use by $OPT" >&2
+                exit 1
+            fi
+        done
+        export LOPT${A}_$NAME="$LOPT"
+        [ "$LARG" ] && export ARG_LOPTA_$NAME="$LARG"
+    fi
+
+    if [ "$DESC" ]; then
+        export DESC_OPT_$NAME="$DESC"
+    fi
+    __PG_OPTION_LIST="$__PG_OPTION_LIST $NAME"
+}
+
+print_opt_man() {
+    local NAME="$1"
+    local L
+
+    # Short option name eg "SOPT_HELP" or "SOPTA_VAL":
+    local SOPT_NAME="SOPT_$NAME" 
+    [ "${!SOPT_NAME}" ] || SOPT_NAME="SOPTA_$NAME"
+ 
+    # Long option name eg "LOPT_HELP" or "LOPTA_VAL"
+    local LOPT_NAME="LOPT_$NAME" 
+    [ "${!LOPT_NAME}" ] || LOPT_NAME="LOPTA_$NAME"
+    
+    local SARG=""
+    local LARG=""
+    local DESC=""
+    local SOPT="${!SOPT_NAME}"
+    local LOPT="${!LOPT_NAME}"
+    [ "$SOPT_NAME" ] && L="ARG_$SOPT_NAME" && SARG=${!L}
+    [ "$LOPT_NAME" ] && L="ARG_$LOPT_NAME" && LARG=${!L}
+    [ "$LARG" ] || LARG="$SARG"
+    local L="DESC_OPT_$NAME" && DESC=${!L}
+
+    [ "$DESC" ] || return 0
+
+    echo ".TP"
+    echo -n ".B "
+    # NB 'echo -n "-E"' swallows the -E!! and it has no --
+    [ "$SOPT" ] && printf "%s" "\\fB\\-$SOPT\\fR"
+    [ "$SOPT" ] && [ "$SARG" ] && echo -n " \\fI$SARG\\fR"
+    if [ "$__PG_LONG_GETOPT" ]; then
+        [ "$SOPT" ] && [ "$LOPT" ] && echo -n ", "
+        [ "$LOPT" ] && printf "%s" "\\fB\\-\\-$LOPT\fR"
+        [ "$LOPT" ] && [ "$LARG" ] && echo -n "\\fI=$LARG\\fR"
+    fi
+    echo
+    echo "$DESC"
+}
+
+print_man_page() {
+    cat <<EOF
+.\" $Id: process-getopt,v 1.1 2008/08/15 12:19:59 bhepple Exp $
+.TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
+.SH NAME
+$PROG \- $SHORT_DESC
+.SH SYNOPSIS
+.hy 0
+.na
+.B $PROG
+.RB "[\|" "options" "\|]" 
+$ARGUMENTS
+.ad b
+.hy 0
+.SH DESCRIPTION
+$USAGE
+.P
+Foobar foobar foobar
+.SH OPTIONS
+EOF
+
+    local NAME
+    for NAME in $__PG_OPTION_LIST; do 
+        print_opt_man $NAME
+    done
+
+    cat <<EOF
+.SH "EXIT STATUS"
+.SH "ENVIRONMENT"
+.SH "FILES"
+.SH "EXAMPLES"
+.SH "NOTES"
+.SH "BUGS"
+.SH "SEE ALSO"
+.SH "AUTHOR"
+Written by Foo Bar <foobar@foobar.org>
+.P
+.RB http://foobar.foobar.org/foobar
+.SH "COPYRIGHT"
+Copyright (c) 2008 Robert Hepple
+.br
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+.P
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.P
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+EOF
+}
+
+add_std_opts() {
+    add_opt HELP "print this help and exit" $HELP_option "" $HELP_loption
+    add_opt VERSION "print version and exit" $VERSION_option "" "$VERSION_loption"
+    add_opt VERBOSE "do it verbosely" $VERBOSE_option "" "$VERBOSE_loption"
+    add_opt PRINT_MAN_PAGE "" "" "" "$PRINTMAN_loption"
+    add_opt END_OPTIONS "explicitly ends the options" "-"
+}
+
+# Note that this function is called in a sub-shell so variables
+# defined here will not be available globally. Also, it's called in
+# $(...) so any std out goes to the caller which is probably not a
+# good thing.
+call_getopt() {
+    # ${!prefix*} is bash 2.04 (and posix) but not in sh:
+    local SHORT_OPTIONS=""
+    local SHORT_OPTIONS_ARG=""
+    local LONG_OPTIONS=""
+    local LONG_OPTIONS_ARG=""
+    local OPT
+    local TEMP
+
+    for OPT in ${!SOPT_*}; do
+        [ "${!OPT}" = "-" ] && continue # special case of '--'
+        SHORT_OPTIONS="$SHORT_OPTIONS${!OPT}"
+    done
+    for OPT in ${!SOPTA_*}; do 
+        SHORT_OPTIONS_ARG="$SHORT_OPTIONS_ARG${!OPT}:"
+    done
+    for OPT in ${!LOPT_*}; do 
+        [ "$LONG_OPTIONS" ] && LONG_OPTIONS="$LONG_OPTIONS,"
+        LONG_OPTIONS="$LONG_OPTIONS${!OPT}"
+    done
+    for OPT in ${!LOPTA_*}; do 
+        [ "$LONG_OPTIONS_ARG" ] && LONG_OPTIONS_ARG="$LONG_OPTIONS_ARG,"
+        LONG_OPTIONS_ARG="$LONG_OPTIONS_ARG${!OPT}:"
+    done
+
+    if [ "$__PG_LONG_GETOPT" ]; then
+        local SHORT_ARGS=""
+        local LONG_ARGS=""
+        [ -n "$SHORT_OPTIONS$SHORT_OPTIONS_ARG" ] && SHORT_ARGS="-o $SHORT_OPTIONS$SHORT_OPTIONS_ARG"
+        [ -n "$LONG_OPTIONS" ] && LONG_ARGS="--long $LONG_OPTIONS"
+        [ -n "$LONG_OPTIONS_ARG" ] && LONG_ARGS="$LONG_ARGS --long $LONG_OPTIONS_ARG"
+        TEMP=$(getopt $SHORT_ARGS $LONG_ARGS -n "$PROG" -- "$@") || exit 1
+    else
+        TEMP=$(getopt $SHORT_OPTIONS$SHORT_OPTIONS_ARG "$@") || exit 1
+    fi
+    
+    echo "$TEMP"
+}
+
+print_opt() {
+    local NAME="$1"
+    local N
+
+    # Short option name eg "SOPT_HELP" or "SOPTA_VAL":
+    local SOPT_NAME="SOPT_$NAME" 
+    [ "${!SOPT_NAME}" ] || SOPT_NAME="SOPTA_$NAME"
+ 
+    # Long option name eg "LOPT_HELP" or "LOPTA_VAL"
+    local LOPT_NAME="LOPT_$NAME" 
+    [ "${!LOPT_NAME}" ] || LOPT_NAME="LOPTA_$NAME"
+    
+    local SARG=""
+    local LARG=""
+    local DESC=""
+    local SOPT="${!SOPT_NAME}"
+    local LOPT="${!LOPT_NAME}"
+    local L
+
+    [ "$SOPT_NAME" ] && L="ARG_$SOPT_NAME" && SARG=${!L}
+    [ "$LOPT_NAME" ] && L="ARG_$LOPT_NAME" && LARG=${!L}
+    [ "$LARG" ] || LARG="$SARG"
+    L="DESC_OPT_$NAME" && DESC=${!L}
+
+    [ "$DESC" ] || return 0
+
+    LINE=""
+    for (( N=0 ; ${#LINE} < SHORT_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
+    [ "$SOPT" ] && LINE="${LINE}-$SOPT"
+    [ "$SOPT" ] && [ "$SARG" ] && LINE="${LINE} $SARG"
+    if [ "$__PG_LONG_GETOPT" ]; then
+        [ "$SOPT" ] && [ "$LOPT" ] && LINE="$LINE, "
+        for (( N=0 ; ${#LINE} < LONG_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
+        [ "$LOPT" ] && LINE="${LINE}--$LOPT"
+        [ "$LOPT" ] && [ "$LARG" ] && LINE="$LINE=$LARG"
+    fi
+    for (( N=0 ; ${#LINE} < OPT_DOC_COL ; N++ )) ; do LINE="$LINE " ; done
+    LINE="${LINE}: "
+    # NB 'echo "-E"' swallows the -E!! and it has no -- so use printf
+    printf "%s" "$LINE"
+    
+    N=${#LINE}
+    local WIDTH=$(( RMARGIN - N ))
+    if ! type fmt &> /dev/null || [ "$WIDTH" -lt 10 ]; then
+        printf "%s\n" "$DESC"
+        return 0
+    fi
+
+    export __PG_INDENT=""
+    while (( ${#__PG_INDENT} < N )); do __PG_INDENT="$__PG_INDENT "; done
+    echo "$DESC" |fmt -w "$WIDTH" -s | { 
+        FIRST="yes"
+        while read L; do 
+            [ "$FIRST" ] || 
+            echo -n "$__PG_INDENT"; FIRST=""; printf "%s\n" "$L"
+        done 
+    }
+    unset __PG_INDENT
+}
+
+# intended to be called in a usage function after all the other options
+# have been printed.
+print_std_opts() {
+    print_opt HELP
+    print_opt VERSION
+    print_opt VERBOSE
+    print_opt END_OPTIONS
+}
+
+print_all_opts() {
+    local NAME
+    if [ "$ARGP_HELP_FMT" ]; then
+        OFS="$IFS"
+        IFS=','
+        set -- $ARGP_HELP_FMT
+        IFS="$OFS"
+        while [ "$1" ]; do
+            case "$1" in
+                short-opt-col*)
+                    SHORT_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
+                    shift
+                    ;;
+                long-opt-col*)
+                    LONG_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
+                    shift
+                    ;;
+                opt-doc-col*)
+                    OPT_DOC_COL=$(echo "$1"|cut -d'=' -f 2)
+                    shift
+                    ;;
+                rmargin*)
+                    RMARGIN=$(echo "$1"|cut -d'=' -f 2)
+                    shift
+                    ;;
+                *)
+                    shift
+                    ;;
+            esac
+        done
+    fi
+
+    for NAME in $__PG_OPTION_LIST; do 
+        print_opt $NAME
+    done
+}
+
+process_opts() {
+    local SHIFT_NUM=0
+    while true; do
+        case $1 in
+        -$HELP_option | --$HELP_loption) 
+            usage
+            print_all_opts
+            exit 0
+            ;;
+
+        -$VERSION_option | --$VERSION_loption) 
+            echo "$PROG: version $VERSION"
+            exit 0 
+            ;;
+
+        -$VERBOSE_option | --$VERBOSE_loption) 
+            VERBOSE="yes"
+            ((SHIFT_NUM++))
+            shift
+            ;;
+
+        --$PRINTMAN_loption)
+            print_man_page
+            exit 0
+            ;;
+
+        --)
+            ((SHIFT_NUM++))
+            break
+            ;;
+            
+        *) 
+            local FUNC=$(opt_to_func "$1")
+            if [ -z "$FUNC" ]; then
+                echo "$PROG: process_opts: no function for option \"$1\"" >&2
+                exit 1
+            fi
+            $FUNC "$1" "$2"; local STAT=$?
+            shift
+            ((SHIFT_NUM++))
+            [ "$STAT" -eq 127 ] && exit 0 # no such function
+            
+            # now let's adjust for options with args:
+            local NAME=${FUNC%$FUNC_SUFFIX}
+            local SA="ARG_SOPTA_$NAME"
+            local LA="ARG_LOPTA_$NAME"
+            if [ "${!SA}${!LA}" ]; then
+                shift
+                ((SHIFT_NUM++))
+            fi
+            ;;
+        esac
+    done
+    cleanup_getopt
+    return $SHIFT_NUM
+}
+
+cleanup_getopt() {
+    unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
+}
+
+opt_to_func() {
+    # returns the function name for an option letter or word
+    local OPT="$1" # an option eg -c or --foobar
+    local NAME
+    for NAME in $__PG_OPTION_LIST; do 
+        local L=LOPT_$NAME
+        local LA=LOPTA_$NAME
+        local S=SOPT_$NAME
+        local SA=SOPTA_$NAME
+        if  [ "--${!L}" = "$OPT" ] || \
+            [ "--${!LA}" = "$OPT" ] || \
+            [ "-${!S}" = "$OPT" ] || \
+            [ "-${!SA}" = "$OPT" ]; then
+            echo "${NAME}$FUNC_SUFFIX"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# stubs to satisfy add_opt on standard opts:
+HELP_func() { :; }
+VERBOSE_func() { :; }
+VERSION_func() { :; }
+PRINT_MAN_PAGE_func() { :; }
+END_OPTIONS_func() { :; }

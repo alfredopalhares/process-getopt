@@ -1,0 +1,276 @@
+.\" $Id: process-getopt.1,v 1.1 2008/08/15 12:19:59 bhepple Exp $
+.TH PROCESS-GETOPT 1 \" -*- nroff -*-
+.SH NAME
+process-getopt \- a wrapper around getopt
+.SH SYNOPSIS
+.hy 0
+.na
+.B process_getopt_version
+.br
+.B add_opt
+\fINAME\fP [ \fIdesc\fP ] [ \fIshort_opt\fP [ \fIarg_name\fP ]] [ \fIlong_opt\fP [ \fIarg_name\fP ]]
+.br
+.B add_std_opts
+.br
+\fBcall_getopt\fP [ \fIargs\fP ]
+.br
+\fBprocess_opts\fP [ \fIargs\fP ]
+.br
+.ad b
+.hy 0
+.SH DESCRIPTION
+There is a common class of errors in
+.BR bash (1)
+scripts which arise in the processing of options, even when
+.BR getopt (1)
+is used; namely, a disagreement between: 
+.IP \(bu 2
+the constants used to define the option letters or long words (eg '\-c'
+or '\-\-cdrom') in the call to
+.BR getopt (1)
+itself, 
+.IP \(bu
+the targets of the case statement used to process the returned values
+from
+.BR getopt (1) 
+and 
+.IP \(bu
+the option letters and words displayed in the help and man pages. 
+.P
+These inconsistencies are particularly likely to creep in after
+maintenance is done on scripts. In any case, this part of the
+code is tedious to write and is often skimped.
+.P
+.B process-getopt
+is intended to eliminate these errors and to automate the creation of
+the
+.BR getopt (1)
+command line, the processing of the options and the printing of the
+help and man pages. It also takes a lot of the drudgery and repetition
+out of these areas of writing scripts, hopefully increasing the
+probability that 
+.BR getopt (1)
+is used and that documentation is written.
+.P
+.B process-getopt
+should be sourced by a 
+.BR bash (1)
+script and the various functions above are then called to process
+command\-line options. Some checking is done by
+.B process-getopt
+as it starts up, most notably that the script has defined a `usage'
+function that it can call.
+.P
+.B process-getopt
+allows the script to:
+.IP \(bu 2
+define short and long options in one central place together with descriptions. 
+.IP \(bu
+provide perfect consistency between the getopt calling parameters, the
+case statement processing the user's options and the help/man pages
+.IP \(bu
+be easy to use and maintain
+.IP \(bu
+automate help\-page and man\-page printing
+.SH FUNCTIONS
+.TP
+.B process_getopt_version
+Prints the version of
+.BR process-getopt .
+This will always be a 2\-digit string of the form
+.B 1.0
+and calling scripts can use this string to ensure they have the right
+version or, at least a compatible version. Just like shared libraries,
+the final digit will be for bug fixes and the first digit will denote
+an API change. Versions will march 1.0 .. 1.9 1.10 1.11 etc.
+.TP
+.B \fBadd_opt\fR
+Defines a new option. It takes the following parameters:
+.IP
+.B name
+is the abstract name that is to be assigned to the option. It must be
+given and must be unique.
+.IP
+.B desc
+is the description to be assigned to the option. It should be a fairly
+short explanation, although it will be re-formatted if more than one
+line one the help screen. It is optional. If not given (eg by using
+the "" null string as a position holder) then the option is
+\fIsilent\fP and is not printed in the help or man pages.
+.IP
+.B short_opt
+is the single letter option (without a leading '\-') to be assigned to
+the option. It is optional, although at least one short or one long
+option must be given.
+.IP
+.B arg_name
+For short and long options, if the option takes a value, then define 
+.BR arg_name .
+This allows
+.B process-getopt
+to look for that value as well as print the argument name in the help
+and man pages.
+.IP
+.B long_opt
+is the long option word (without a leading '\-\-') to be assigned to the
+option. It is optional, although at least one short or one long option
+must be given.
+.IP
+Note that the order of printing the options in the help and man pages
+follows the order of definition by
+.BR add_opt .
+The standard options are printed after the others.
+.IP
+Before
+.B add_opt
+is called, a callback function named
+.B ${name}_func
+must have been defined.
+.BR add_opt
+will immediately call the callback function (with no arguments) to
+check for its presence. Later on if that option is given on the
+command line, the callback function will be called from
+.B process_opts
+with 2 arguments, namely the option string that triggered the function
+and the value associated with the option on the command line, if any.
+.TP
+.B \fBadd_std_opts\fR
+Adds the 'standard options', namely
+.IP
+.BR help " (\-h, \-\-help),"
+.IP
+.BR version " (\-V, \-\-version),"
+.IP
+.BR verbose " {\-v, \-\-verbose),"
+.IP
+.BR end\-options " (\-\-),"
+.IP
+.BR print\-man\-page " (\-\-print\-man\-page)"
+.IP
+.B print\-man\-page 
+is a 
+.I silent
+option, not printed in the help or man pages. It is primarily a tool for the developer and when the script is invoked with this option,
+.B process-getopt
+prints a skeleton
+.BR man (1)
+page on stdout and exits. This provides only a starting point for a
+typical man page, but at least all the options are formatted, saving a
+fair amout of fiddly work. It should probably be called once the
+script is more or less finished before using the skeleton to produce a
+final manual page.
+.TP
+\fBcall_getopt\fR \fI"$@"\fP
+Uses the option data created by
+.B add_opt
+to assemble arguments to be passed to
+.BR getopt (1)
+and then calls it to re\-order the arguments. See
+.BR getopt (1)
+for full details.
+.TP
+.B \fBprocess_opts\fR \fI"$@"\fP
+Takes each option from the command line and calls the callback
+function for that option (previously stored by
+.BR add_opt )
+with up to two arguments \- the option letter or word itself and any
+argument, if appropriate. It is up to the callback function to take
+the correct action on receiving the option eg by setting a boolean or
+storing the value.
+.SH "EXIT STATUS"
+All the functions return 0 on success and non\-zero on error except for
+.B process_opts
+which returns the number of items which should be
+.BR 'shift' ed
+off the argument list in order to remove the options and their
+arguments.
+.SH "ENVIRONMENT"
+The following environment parameters are recognised by
+.BR process-getopt :
+.TP
+.B PROG
+Mandatory. This should be set to the program name, typically
+.B $(basename $0)
+.TP
+.B VERSION
+Mandatory. This should be set to the version of the program. It will
+be printed in response to the 
+.I \-V,\-\-version 
+option.
+.TP
+.B VERBOSE 
+Optional. This should be set to the null string before
+calling
+.B process_opts
+and it will be set to non\-null if the 
+.I \-v,\-\-verbose
+option is given.
+.TP 
+.B ARGUMENTS
+Optional. This should be set to the list of argument that the script
+can take. It should also be used in the script's USAGE parameter.
+.TP
+.B SHORT_DESC
+Optional. This should be set to a one line description that will be
+inserted into the man page. It could also be used in the
+script's `usage' function.
+.TP
+.B USAGE
+Optional. This should be a long string describing the command. It will
+be inserted into the man pages. It should also be used in the
+script's `usage' function.
+.TP
+.B ARGP_HELP_FMT
+Optional. This is the same environment variable recognised by GNU's
+.BR argp (3)
+C function \- see http://www.gnu.org/software/libtool/manual/libc/Argp-User-Customization.html
+The following comma\-separated clauses are supported here:
+.IP 
+.B short\-opt\-col=n
+This prints the first short option in column n. The default is 2. 
+.IP 
+.B long\-opt\-col=n
+This prints the first long option in column n. The default is 6. 
+.IP 
+.B opt\-doc\-col=n
+This prints the documentation for options starting in column n. The default is 29. 
+.IP 
+.B rmargin=n
+This will word wrap help output at or before column n. The default is 79.
+.IP
+The default is:
+.P
+ARGP_HELP_FMT="short\-opt\-col=2,long\-opt\-col=6,opt\-doc\-col=29,rmargin=79"
+.SH "FILES"
+.SH "EXAMPLES"
+See
+.BR boilerplate (1) 
+in this package for a simplistic sample of use.
+.SH "NOTES"
+.B process-getopt
+is designed to be portable to versions of
+.BR getopt (1)
+that do not support long options, although this has not been
+extensively tested.
+.SH "BUGS"
+.SH "SEE ALSO"
+.BR getopt (1)
+.SH "AUTHOR"
+Written by Bob Hepple <bhepple@freeshell.org>
+.P
+.SH "COPYRIGHT"
+Copyright (c) 2008 Robert Hepple
+.br
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+.P
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.P
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
