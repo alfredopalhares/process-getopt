@@ -37,14 +37,14 @@ cp -p README $DIR/README
 cp -p INSTALL $DIR/INSTALL
 cp -p COPYING ChangeLog AUTHORS $DIR/
 
-sed -e "s/X\.X/$VERSION/g" <process-getopt.spec >$DIR/process-getopt.spec
+#sed -e "s/X\.X/$VERSION/g" <process-getopt.spec >$DIR/process-getopt.spec
 cp -p $SCRIPTS $DIR/bin/
 cp -p $MANS $DIR/share/man/man1
 
 tar czf ${DIR}.tgz $DIR
+echo Wrote ${DIR}.tgz
 
 cp -f process-getopt-${VERSION}.tgz ~/public_html/process-getopt
-cp -f process-getopt-${VERSION}.ebuild ~/public_html/process-getopt
 
 echo "To upload (already in ~/public_html/process-getopt):"
 echo "scp process-getopt-${VERSION}.tgz bhepple.freeshell.org:html/process-getopt"
