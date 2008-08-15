@@ -1,0 +1,7 @@
+As far as end-users are concerned there is only one file to take care
+of and that is process-getopt. This can be placed anywhere on the PATH
+perhaps /usr/local/bin.
+
+Developers who intend to create scripts using process-getopt might
+also like to install the man page somewhere on MANPATH, perhaps
+/usr/local/share/man/man1.
