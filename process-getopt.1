@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.1 2008/08/15 12:19:59 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.2 2008/08/21 03:53:41 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -239,8 +239,30 @@ This prints the documentation for options starting in column n. The default is 2
 This will word wrap help output at or before column n. The default is 79.
 .IP
 The default is:
-.P
-ARGP_HELP_FMT="short\-opt\-col=2,long\-opt\-col=6,opt\-doc\-col=29,rmargin=79"
+.IP
+short\-opt\-col=2,long\-opt\-col=6,opt\-doc\-col=29,rmargin=79
+.TP
+.B STOP_ON_FIRST_NON_OPT
+If this is set and exported, then 
+.BR getopt (1) 
+will stop processing options
+as soon as the first non-option argument is reached without the user
+adding a '\-\-'. This is useful in scripts that take another command
+as its arguments eg if we wrote a wrapper around
+.BR sudo (1) 
+we would otherwise have to write:
+.IP
+\fCmy_sudo -- ls -l /root\fP
+.IP
+If 
+.BR my_sudo (1) 
+has 
+.IP
+\fCexport STOP_ON_FIRST_NON_OPT=yes\fP
+.IP
+then we can write:
+.IP
+\fCmy_sudo ls -l /root\fP
 .SH "FILES"
 .SH "EXAMPLES"
 See

@@ -48,3 +48,4 @@ cp -f process-getopt-${VERSION}.tgz ~/public_html/process-getopt
 
 echo "To upload (already in ~/public_html/process-getopt):"
 echo "scp process-getopt-${VERSION}.tgz bhepple.freeshell.org:html/process-getopt"
+echo "scp process-getopt-${VERSION}.tgz shell.sourceforge.net:/home/groups/p/pr/process-getopt/htdocs/"

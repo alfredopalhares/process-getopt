@@ -1,5 +1,13 @@
-See process-getopt.1 for documentation,
-boilerplate for an example
+See process-getopt.1 or process-getopt.pdf for documentation,
+
+boilerplate for a minimal script
+example-script for an annotated example
 INSTALL for installation instructions
 COPYING
 AUTHORS
+
+To get the latest head of CVS tree:
+
+cvs -d:pserver:anonymous@process-getopt.cvs.sourceforge.net:/cvsroot/process-getopt login
+ 
+cvs -z3 -d:pserver:anonymous@process-getopt.cvs.sourceforge.net:/cvsroot/process-getopt co -P process-getopt
