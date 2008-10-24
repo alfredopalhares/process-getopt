@@ -18,12 +18,12 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: example-script,v 1.1 2008/08/21 03:53:41 bhepple Exp $
+# $Id: example-script,v 1.2 2008/10/24 01:25:32 bhepple Exp $
 
 # A tutorial for process-getopt 
 
 PROG=$(basename $0)
-VERSION="1.0"
+VERSION="1.1"
 VERBOSE=""
 ARGUMENTS="COMMANDS"
 SHORT_DESC="short one-liner for man page"
@@ -41,6 +41,7 @@ usage() {
     echo "$USAGE"
     echo
     echo "Options:"
+    print_all_opts
 }
 
 # Pull in the process-getopt code - as long as it's somewhere on $PATH

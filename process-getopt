@@ -17,8 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# http://process-getopt.sourceforge.net
-# $Id: process-getopt,v 1.2 2008/08/21 03:53:41 bhepple Exp $
+# $Id: process-getopt,v 1.3 2008/10/24 01:25:32 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -42,7 +41,7 @@
 #
 # 1. define these:
 # PROG=$(basename $0)
-# VERSION="1.1"
+# VERSION="1.0"
 # SHORT_DESC="one liner for man page"
 # ARGUMENTS="foobar barfoo [ files ] [ more-args ]"
 # USAGE="\
@@ -99,15 +98,32 @@
 # todo:
 # python, c, perl versions of this. ruby? c++? java?
 
+__PG_VERSION="1.1"
+__PG_STANDALONE=""
+
+process_getopt_usage() {
+    echo "Usage: $PROG [ OPTIONS ]"
+    echo
+    echo "Normally sourced by other scripts rather than running by itself."
+    echo "See the man page for details of functions that $PROG provides."
+    echo "When called without options, does nothing. Otherwise:"
+    echo
+    echo "Options:"
+    print_all_opts
+}
+
 # First some safety checks:
 [ "$PROG" ] || { 
     PROG=$(basename $0)
-    if [ "$PROG" = "process-getopt" ]; then
-        echo "$PROG: nothing to see here. Please move along." >&2
-    else
+    if [ "$PROG" != "process-getopt" ]; then
         echo "$PROG: \$PROG not defined, bailing" >&2; 
+        exit 1; 
     fi
-    exit 1; 
+    # Otherwise, we're running as a standalone - perhaps to get the
+    # version or help
+    VERSION=$__PG_VERSION
+    usage() { process_getopt_usage; }
+    __PG_STANDALONE="yes"
 }
 
 [ "$VERSION" ] || { 
@@ -125,13 +141,6 @@ it's too dangerous for process-getopt to continue."
     exit 1
 fi
 
-usage &>/dev/null || {
-    echo "$PROG: the 'usage' function is not defined but is required by" >&2
-    echo "process-getopt." >&2 
-    exit 1
-}
-
-__PG_VERSION="1.0"
 __PG_OPTION_LIST=""
 __PG_LONG_GETOPT=""
 # decide if this getopt supports long options:
@@ -280,7 +289,7 @@ print_opt_man() {
 
 print_man_page() {
     cat <<EOF
-.\" $Id: process-getopt,v 1.2 2008/08/21 03:53:41 bhepple Exp $
+.\" $Id: process-getopt,v 1.3 2008/10/24 01:25:32 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -353,6 +362,7 @@ call_getopt() {
     local SHORT_OPTIONS_ARG=""
     local LONG_OPTIONS=""
     local LONG_OPTIONS_ARG=""
+    local STOP_EARLY=""
     local OPT
     local TEMP
 
@@ -419,26 +429,31 @@ print_opt() {
     [ "$SOPT" ] && [ "$SARG" ] && LINE="${LINE} $SARG"
     if [ "$__PG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && LINE="$LINE, "
-        for (( N=0 ; ${#LINE} < LONG_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
-        [ "$LOPT" ] && LINE="${LINE}--$LOPT"
-        [ "$LOPT" ] && [ "$LARG" ] && LINE="$LINE=$LARG"
+        if [ "$LOPT" ]; then
+            for (( N=0 ; ${#LINE} < LONG_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
+            [ "$LOPT" ] && LINE="${LINE}--$LOPT"
+            [ "$LOPT" ] && [ "$LARG" ] && LINE="$LINE=$LARG"
+        fi
     fi
-    for (( N=0 ; ${#LINE} < OPT_DOC_COL ; N++ )) ; do LINE="$LINE " ; done
-    LINE="${LINE}: "
+    LINE="$LINE "
+    while (( ${#LINE} < OPT_DOC_COL - 1)) ; do LINE="$LINE " ; done
     # NB 'echo "-E"' swallows the -E!! and it has no -- so use printf
     printf "%s" "$LINE"
     
-    N=${#LINE}
-    local WIDTH=$(( RMARGIN - N ))
+    FIRST="yes"
+    if (( ${#LINE} >= OPT_DOC_COL )); then
+        echo
+        FIRST=""
+    fi
+    local WIDTH=$(( RMARGIN - OPT_DOC_COL ))
     if ! type fmt &> /dev/null || [ "$WIDTH" -lt 10 ]; then
         printf "%s\n" "$DESC"
         return 0
     fi
 
     export __PG_INDENT=""
-    while (( ${#__PG_INDENT} < N )); do __PG_INDENT="$__PG_INDENT "; done
+    while (( ${#__PG_INDENT} < OPT_DOC_COL - 1)); do __PG_INDENT="$__PG_INDENT "; done
     echo "$DESC" |fmt -w "$WIDTH" -s | { 
-        FIRST="yes"
         while read L; do 
             [ "$FIRST" ] || 
             echo -n "$__PG_INDENT"; FIRST=""; printf "%s\n" "$L"
@@ -499,7 +514,6 @@ process_opts() {
         case $1 in
         -$HELP_option | --$HELP_loption) 
             usage
-            print_all_opts
             exit 0
             ;;
 
@@ -580,3 +594,21 @@ VERBOSE_func() { :; }
 VERSION_func() { :; }
 PRINT_MAN_PAGE_func() { :; }
 END_OPTIONS_func() { :; }
+
+# Final safety check - it needs to be down here so that print_all_opts
+# is available:
+usage &>/dev/null || {
+    echo "$PROG: the 'usage' function is not defined but is required by" >&2
+    echo "process-getopt." >&2 
+    exit 1
+}
+
+# normally, this is called without args - but we can also respond to
+# normal options too!
+[ "$__PG_STANDALONE" ] && {
+    add_std_opts
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@"
+    shift "$?"
+}

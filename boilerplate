@@ -2,12 +2,12 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: boilerplate,v 1.3 2008/08/29 09:33:58 bhepple Exp $
+# $Id: boilerplate,v 1.4 2008/10/24 01:25:32 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 
 PROG=$(basename $0)
-VERSION="1.1"
+VERSION="1.2"
 VERBOSE=""
 ARGUMENTS=""
 SHORT_DESC=""
@@ -24,6 +24,7 @@ usage() {
     echo "$USAGE"
     echo
     echo "Options:"
+    print_all_opts
 }
 
 # Pull in the process-getopt code - as long as it's somewhere on $PATH

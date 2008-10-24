@@ -1,10 +1,15 @@
-.\" $Id: process-getopt.1,v 1.3 2008/08/29 09:33:58 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.4 2008/10/24 01:25:32 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
 .SH SYNOPSIS
 .hy 0
 .na
+.B process-getopt
+.RB "[\|" "options" "\|]"
+.P
+or when sourced:
+.P
 .B process_getopt_version
 .br
 .B add_opt
@@ -15,6 +20,8 @@ process-getopt \- a wrapper around getopt
 \fBcall_getopt\fP [ \fIargs\fP ]
 .br
 \fBprocess_opts\fP [ \fIargs\fP ]
+.br
+\fBprint_all_opts\fP
 .br
 .ad b
 .hy 0
@@ -180,6 +187,23 @@ with up to two arguments \- the option letter or word itself and any
 argument, if appropriate. It is up to the callback function to take
 the correct action on receiving the option eg by setting a boolean or
 storing the value.
+.TP
+.B \fBprint_all_opts\fR \fI"$@"\fP
+Prints all the options in a neatly formatted list.
+Normally called from the caller's usage function.
+.SH OPTIONS
+.TP
+.B \fB\-h\fR, \fB\-\-help\fR
+print this help and exit
+.TP
+.B \fB\-V\fR, \fB\-\-version\fR
+print version and exit
+.TP
+.B \fB\-v\fR, \fB\-\-verbose\fR
+do it verbosely
+.TP
+.B \fB\--\fR
+explicitly ends the options
 .SH "EXIT STATUS"
 All the functions return 0 on success and non\-zero on error except for
 .B process_opts
@@ -269,8 +293,11 @@ then we can write:
 .SH "FILES"
 .SH "EXAMPLES"
 See
+.BR example-script (1) 
+in this package for a documented sample of use.
+See
 .BR boilerplate (1) 
-in this package for a simplistic sample of use.
+in this package for a minimalist boilerplate.
 .SH "NOTES"
 .B process-getopt
 is designed to be portable to versions of
@@ -278,6 +305,7 @@ is designed to be portable to versions of
 that do not support long options, although this has not been
 extensively tested.
 .SH "BUGS"
+The -V,--verbose and -- options are not very useful.
 .SH "SEE ALSO"
 .BR getopt (1)
 .SH "AUTHOR"
