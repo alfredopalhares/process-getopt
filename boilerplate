@@ -2,11 +2,12 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: boilerplate,v 1.4 2008/10/24 01:25:32 bhepple Exp $
+# $Id: boilerplate,v 1.5 2008/10/31 06:47:39 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 
 PROG=$(basename $0)
+DIR=$(dirname $0)
 VERSION="1.2"
 VERBOSE=""
 ARGUMENTS=""

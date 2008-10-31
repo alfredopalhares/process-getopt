@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.4 2008/10/24 01:25:32 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.5 2008/10/31 06:47:39 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -290,6 +290,30 @@ has
 then we can write:
 .IP
 \fCmy_sudo ls -l /root\fP
+.P
+After "add_opt NAME etc" has been called, the following environment
+parameters are available for future use in the program:
+.TP
+.B DESC_OPT_$NAME
+The description string for the option.
+.TP
+.B SOPT_$NAME
+The short option letter (if the option takes no argument).
+.TP
+.B SOPTA_$NAME
+The short option letter (if the option takes an argument).
+.TP
+.B LOPT_$NAME
+The long option word (if the option takes no argument).
+.TP
+.B LOPTA_$NAME
+The long option word (if the option takes an argument).
+.TP
+.B ARG_SOPTA_$NAME
+The short option parameter name (if the option takes an argument).
+.TP
+.B ARG_LOPTA_$NAME
+The long option parameter name (if the option takes an argument).
 .SH "FILES"
 .SH "EXAMPLES"
 See

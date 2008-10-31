@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.3 2008/10/24 01:25:32 bhepple Exp $
+# $Id: process-getopt,v 1.4 2008/10/31 06:47:39 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -98,7 +98,7 @@
 # todo:
 # python, c, perl versions of this. ruby? c++? java?
 
-__PG_VERSION="1.1"
+__PG_VERSION="1.2"
 __PG_STANDALONE=""
 
 process_getopt_usage() {
@@ -110,7 +110,12 @@ process_getopt_usage() {
     echo
     echo "Options:"
     print_all_opts
+    echo "  --$PRINTMAN_loption          print out a man page stub"
 }
+
+# make sure our address space is clean - particularly for when we call
+# one shell from another and both use process-getopt:
+unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
 
 # First some safety checks:
 [ "$PROG" ] || { 
@@ -123,7 +128,7 @@ process_getopt_usage() {
     # version or help
     VERSION=$__PG_VERSION
     usage() { process_getopt_usage; }
-    __PG_STANDALONE="yes"
+    __PG_STANDALONE="__PG_STANDALONE_yes"
 }
 
 [ "$VERSION" ] || { 
@@ -131,22 +136,12 @@ process_getopt_usage() {
     exit 1
 }
 
-if [ "${!SOPT*}${!LOPT*}${!ARG_OPT*}${!DESC_OPT*}" ]; then
-    echo  >&2 "\
-$PROG: some environment parameters needed by 'process-getopt' are already
-defined:
-${!SOPT*} ${!LOPT*} ${!ARG_OPT*} ${!DESC_OPT*}
-
-it's too dangerous for process-getopt to continue."
-    exit 1
-fi
-
 __PG_OPTION_LIST=""
 __PG_LONG_GETOPT=""
 # decide if this getopt supports long options:
 getopt --test &>/dev/null
 __PG_STAT=$?
-[ $__PG_STAT -eq 4 ] && __PG_LONG_GETOPT="yes"
+[ $__PG_STAT -eq 4 ] && __PG_LONG_GETOPT="__PG_LONG_GETOPT_yes"
 
 HELP_loption="help"
 HELP_option="h"
@@ -218,26 +213,38 @@ add_opt () {
     [ "$SARG$LARG" ] && A="A" || A=""
 
     if [ "$SOPT" ]; then
-        # check it's not already in use
+        [ ${#SOPT} -ne 1 ] && {
+            echo "$PROG: short option \"$SOPT\" for option $NAME is not a \
+single character" >&2
+            exit 1
+        }
+        # check it's not already in use - cover the case of with and
+        # without args:
         for OPT in $__PG_OPTION_LIST; do 
-            L="SOPT${A}_$NAME"
-            if [ "$SOPT" = "${!L}" ]; then
-                echo "$PROG: short option \"$SOPT\" is already in use by $OPT" >&2
-                exit 1
-            fi
+            for SUFFIX in "" "A"; do
+                L="SOPT${SUFFIX}_$OPT"
+                if [ "$SOPT" = "${!L}" ]; then
+                    echo "$PROG: short option \"$SOPT\" is already in use by \
+$OPT" >&2
+                    exit 1
+                fi
+            done
         done
         export SOPT${A}_$NAME="$SOPT"
         [ "$SARG" ] && export ARG_SOPTA_$NAME="$SARG"
     fi
 
     if [ "$LOPT" ]; then
-        # check it's not already in use
+        # check it's not already in use - cover the case of with and
+        # without args:
         for OPT in $__PG_OPTION_LIST; do 
-            L="LOPT${A}_$NAME"
-            if [ "$LOPT" = "${!L}" ]; then
-                echo "$PROG: long option \"$LOPT\" is already in use by $OPT" >&2
-                exit 1
-            fi
+            for SUFFIX in "" "A"; do
+                L="LOPT${SUFFIX}_$OPT"
+                if [ "$LOPT" = "${!L}" ]; then
+                    echo "$PROG: long option \"$LOPT\" is already in use by $OPT" >&2
+                    exit 1
+                fi
+            done
         done
         export LOPT${A}_$NAME="$LOPT"
         [ "$LARG" ] && export ARG_LOPTA_$NAME="$LARG"
@@ -289,7 +296,7 @@ print_opt_man() {
 
 print_man_page() {
     cat <<EOF
-.\" $Id: process-getopt,v 1.3 2008/10/24 01:25:32 bhepple Exp $
+.\" $Id: process-getopt,v 1.4 2008/10/31 06:47:39 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -430,7 +437,10 @@ print_opt() {
     if [ "$__PG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && LINE="$LINE, "
         if [ "$LOPT" ]; then
-            for (( N=0 ; ${#LINE} < LONG_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
+            [ "$SOPT" ] && LONG_START=$LONG_COL_OPT || LONG_START=$SHORT_OPT_COL
+            for (( N=0 ; ${#LINE} < LONG_START ; N++ )); do 
+                LINE="$LINE "
+            done
             [ "$LOPT" ] && LINE="${LINE}--$LOPT"
             [ "$LOPT" ] && [ "$LARG" ] && LINE="$LINE=$LARG"
         fi
@@ -440,7 +450,7 @@ print_opt() {
     # NB 'echo "-E"' swallows the -E!! and it has no -- so use printf
     printf "%s" "$LINE"
     
-    FIRST="yes"
+    FIRST="FIRST_yes"
     if (( ${#LINE} >= OPT_DOC_COL )); then
         echo
         FIRST=""
@@ -523,7 +533,7 @@ process_opts() {
             ;;
 
         -$VERBOSE_option | --$VERBOSE_loption) 
-            VERBOSE="yes"
+            VERBOSE="VERBOSE_yes"
             ((SHIFT_NUM++))
             shift
             ;;
@@ -560,12 +570,7 @@ process_opts() {
             ;;
         esac
     done
-    cleanup_getopt
     return $SHIFT_NUM
-}
-
-cleanup_getopt() {
-    unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
 }
 
 opt_to_func() {
