@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.4 2008/10/31 06:47:39 bhepple Exp $
+# $Id: process-getopt,v 1.5 2008/11/02 05:05:54 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -114,8 +114,18 @@ process_getopt_usage() {
 }
 
 # make sure our address space is clean - particularly for when we call
-# one shell from another and both use process-getopt:
-unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
+# one shell from another and both use process-getopt. Or possibly if
+# we're building something like openssl with global-options, commands
+# and command-options, eg. openssl -n rsa -b arg arg etc We'd use
+# process-getopt with STOP_ON_FIRST_NON_OPT set to process the global
+# options then call clean_process_getopt and then use process-getopt
+# again to process the command options. Not yet tested.
+clean_process_getopt() {
+    unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
+    unset __PG_OPTION_LIST
+}
+
+clean_process_getopt
 
 # First some safety checks:
 [ "$PROG" ] || { 
@@ -256,38 +266,67 @@ $OPT" >&2
     __PG_OPTION_LIST="$__PG_OPTION_LIST $NAME"
 }
 
+get_opt_letter() {
+    local NAME="$1"
+    local L="SOPT_$NAME" 
+    
+    [ "${!L}" ] || L="SOPTA_$NAME"
+    echo -n  "${!L}"
+}
+
+get_opt_string() {
+    local NAME="$1"
+    local L="LOPT_$NAME" 
+    
+    [ "${!L}" ] || L="LOPTA_$NAME"
+    echo -n  "${!L}"
+}
+
+get_opt_sarg() {
+    local NAME="$1"
+    local L="ARG_SOPTA_$NAME" 
+    
+    echo -n "${!L}"
+}
+
+get_opt_larg() {
+    local NAME="$1"
+    local L="ARG_LOPTA_$NAME" 
+    
+    echo -n "${!L}"
+}
+
+get_opt_desc() {
+    local NAME="$1"
+    local L="DESC_OPT_$NAME" 
+    
+    echo -n "${!L}"
+}
+
 print_opt_man() {
     local NAME="$1"
     local L
+    local DESC
+    local SOPT
+    local LOPT
+    local SARG
+    local LARG
 
-    # Short option name eg "SOPT_HELP" or "SOPTA_VAL":
-    local SOPT_NAME="SOPT_$NAME" 
-    [ "${!SOPT_NAME}" ] || SOPT_NAME="SOPTA_$NAME"
- 
-    # Long option name eg "LOPT_HELP" or "LOPTA_VAL"
-    local LOPT_NAME="LOPT_$NAME" 
-    [ "${!LOPT_NAME}" ] || LOPT_NAME="LOPTA_$NAME"
-    
-    local SARG=""
-    local LARG=""
-    local DESC=""
-    local SOPT="${!SOPT_NAME}"
-    local LOPT="${!LOPT_NAME}"
-    [ "$SOPT_NAME" ] && L="ARG_$SOPT_NAME" && SARG=${!L}
-    [ "$LOPT_NAME" ] && L="ARG_$LOPT_NAME" && LARG=${!L}
-    [ "$LARG" ] || LARG="$SARG"
-    local L="DESC_OPT_$NAME" && DESC=${!L}
-
+    DESC=$(get_opt_desc $NAME)
     [ "$DESC" ] || return 0
+    SOPT=$(get_opt_letter $NAME)
+    LOPT=$(get_opt_string $NAME)
+    SARG=$(get_opt_sarg $NAME)
+    LARG=$(get_opt_larg $NAME)
 
     echo ".TP"
     echo -n ".B "
     # NB 'echo -n "-E"' swallows the -E!! and it has no --
-    [ "$SOPT" ] && printf "%s" "\\fB\\-$SOPT\\fR"
+    [ "$SOPT" ] && printf -- "%s" "\\fB\\-$SOPT\\fR"
     [ "$SOPT" ] && [ "$SARG" ] && echo -n " \\fI$SARG\\fR"
     if [ "$__PG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && echo -n ", "
-        [ "$LOPT" ] && printf "%s" "\\fB\\-\\-$LOPT\fR"
+        [ "$LOPT" ] && printf -- "%s" "\\fB\\-\\-$LOPT\fR"
         [ "$LOPT" ] && [ "$LARG" ] && echo -n "\\fI=$LARG\\fR"
     fi
     echo
@@ -296,7 +335,7 @@ print_opt_man() {
 
 print_man_page() {
     cat <<EOF
-.\" $Id: process-getopt,v 1.4 2008/10/31 06:47:39 bhepple Exp $
+.\" $Id: process-getopt,v 1.5 2008/11/02 05:05:54 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -406,29 +445,20 @@ call_getopt() {
 
 print_opt() {
     local NAME="$1"
-    local N
-
-    # Short option name eg "SOPT_HELP" or "SOPTA_VAL":
-    local SOPT_NAME="SOPT_$NAME" 
-    [ "${!SOPT_NAME}" ] || SOPT_NAME="SOPTA_$NAME"
- 
-    # Long option name eg "LOPT_HELP" or "LOPTA_VAL"
-    local LOPT_NAME="LOPT_$NAME" 
-    [ "${!LOPT_NAME}" ] || LOPT_NAME="LOPTA_$NAME"
-    
-    local SARG=""
-    local LARG=""
-    local DESC=""
-    local SOPT="${!SOPT_NAME}"
-    local LOPT="${!LOPT_NAME}"
     local L
+    local N
+    local DESC
+    local SOPT
+    local LOPT
+    local SARG
+    local LARG
 
-    [ "$SOPT_NAME" ] && L="ARG_$SOPT_NAME" && SARG=${!L}
-    [ "$LOPT_NAME" ] && L="ARG_$LOPT_NAME" && LARG=${!L}
-    [ "$LARG" ] || LARG="$SARG"
-    L="DESC_OPT_$NAME" && DESC=${!L}
-
+    DESC=$(get_opt_desc $NAME)
     [ "$DESC" ] || return 0
+    SOPT=$(get_opt_letter $NAME)
+    LOPT=$(get_opt_string $NAME)
+    SARG=$(get_opt_sarg $NAME)
+    LARG=$(get_opt_larg $NAME)
 
     LINE=""
     for (( N=0 ; ${#LINE} < SHORT_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
@@ -448,7 +478,7 @@ print_opt() {
     LINE="$LINE "
     while (( ${#LINE} < OPT_DOC_COL - 1)) ; do LINE="$LINE " ; done
     # NB 'echo "-E"' swallows the -E!! and it has no -- so use printf
-    printf "%s" "$LINE"
+    printf -- "%s" "$LINE"
     
     FIRST="FIRST_yes"
     if (( ${#LINE} >= OPT_DOC_COL )); then
@@ -457,7 +487,7 @@ print_opt() {
     fi
     local WIDTH=$(( RMARGIN - OPT_DOC_COL ))
     if ! type fmt &> /dev/null || [ "$WIDTH" -lt 10 ]; then
-        printf "%s\n" "$DESC"
+        printf -- "%s\n" "$DESC"
         return 0
     fi
 
@@ -466,55 +496,94 @@ print_opt() {
     echo "$DESC" |fmt -w "$WIDTH" -s | { 
         while read L; do 
             [ "$FIRST" ] || 
-            echo -n "$__PG_INDENT"; FIRST=""; printf "%s\n" "$L"
+            echo -n "$__PG_INDENT"; FIRST=""; printf -- "%s\n" "$L"
         done 
     }
     unset __PG_INDENT
 }
 
-# intended to be called in a usage function after all the other options
-# have been printed.
-print_std_opts() {
-    print_opt HELP
-    print_opt VERSION
-    print_opt VERBOSE
-    print_opt END_OPTIONS
+print_flags() {
+    local NAME
+    local FLAGS=""
+
+    for NAME in $__PG_OPTION_LIST; do 
+        FLAGS="$FLAGS$(get_opt_letter $NAME)"
+    done
+    echo -n "$FLAGS"
+}
+
+print_short_args() {
+    local NAME
+
+    for NAME in $__PG_OPTION_LIST; do 
+        SARG=$(get_opt_sarg "$NAME")
+        [ "$SARG" ] || continue
+        SOPT=$(get_opt_letter "$NAME")
+        printf -- " -%s <%s>" $SOPT $SARG
+    done
+    echo -n "$FLAGS"
+}
+
+print_long_args() {
+    local NAME
+
+    for NAME in $__PG_OPTION_LIST; do 
+        LARG=$(get_opt_larg "$NAME")
+        [ "$LARG" ] || continue
+        LOPT=$(get_opt_string "$NAME")
+        printf -- " --%s=<%s>" $LOPT $LARG
+    done
+}
+
+print_all_args() {
+    local NAME
+
+    for NAME in $__PG_OPTION_LIST; do 
+        SARG=$(get_opt_sarg "$NAME")
+        SOPT=$(get_opt_letter "$NAME")
+        LARG=$(get_opt_larg "$NAME")
+        LOPT=$(get_opt_string "$NAME")
+
+        [ "$SARG" ] && printf -- " -%s <%s>" $SOPT $SARG
+        [ "$LARG" ] && printf -- " --%s=<%s>" $LOPT $LARG
+    done
 }
 
 print_all_opts() {
     local NAME
-    if [ "$ARGP_HELP_FMT" ]; then
-        OFS="$IFS"
-        IFS=','
-        set -- $ARGP_HELP_FMT
-        IFS="$OFS"
-        while [ "$1" ]; do
-            case "$1" in
-                short-opt-col*)
-                    SHORT_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
-                    shift
-                    ;;
-                long-opt-col*)
-                    LONG_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
-                    shift
-                    ;;
-                opt-doc-col*)
-                    OPT_DOC_COL=$(echo "$1"|cut -d'=' -f 2)
-                    shift
-                    ;;
-                rmargin*)
-                    RMARGIN=$(echo "$1"|cut -d'=' -f 2)
-                    shift
-                    ;;
-                *)
-                    shift
-                    ;;
-            esac
-        done
-    fi
-
     for NAME in $__PG_OPTION_LIST; do 
         print_opt $NAME
+    done
+}
+
+load_help_fmt() {
+    [ "$ARGP_HELP_FMT" ] || return
+    OFS="$IFS"
+    IFS=','
+    set -- $ARGP_HELP_FMT
+    IFS="$OFS"
+    while [ "$1" ]; do
+        case "$1" in
+            short-opt-col*)
+                SHORT_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
+                shift
+                ;;
+            long-opt-col*)
+                LONG_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
+                shift
+                ;;
+            opt-doc-col*)
+                OPT_DOC_COL=$(echo "$1"|cut -d'=' -f 2)
+                shift
+                ;;
+            rmargin*)
+                RMARGIN=$(echo "$1"|cut -d'=' -f 2)
+                shift
+                ;;
+            *)
+                shift
+                ;;
+        esac
     done
 }
 
@@ -549,18 +618,17 @@ process_opts() {
             ;;
             
         *) 
-            local FUNC=$(opt_to_func "$1")
-            if [ -z "$FUNC" ]; then
+            local NAME=$(get_opt_name "$1")
+            if [ -z "$NAME" ]; then
                 echo "$PROG: process_opts: no function for option \"$1\"" >&2
                 exit 1
             fi
-            $FUNC "$1" "$2"; local STAT=$?
+            $NAME$FUNC_SUFFIX "$1" "$2"; local STAT=$?
             shift
             ((SHIFT_NUM++))
             [ "$STAT" -eq 127 ] && exit 0 # no such function
             
             # now let's adjust for options with args:
-            local NAME=${FUNC%$FUNC_SUFFIX}
             local SA="ARG_SOPTA_$NAME"
             local LA="ARG_LOPTA_$NAME"
             if [ "${!SA}${!LA}" ]; then
@@ -573,8 +641,8 @@ process_opts() {
     return $SHIFT_NUM
 }
 
-opt_to_func() {
-    # returns the function name for an option letter or word
+get_opt_name() {
+    # returns the name for an option letter or word
     local OPT="$1" # an option eg -c or --foobar
     local NAME
     for NAME in $__PG_OPTION_LIST; do 
@@ -586,7 +654,7 @@ opt_to_func() {
             [ "--${!LA}" = "$OPT" ] || \
             [ "-${!S}" = "$OPT" ] || \
             [ "-${!SA}" = "$OPT" ]; then
-            echo "${NAME}$FUNC_SUFFIX"
+            echo "${NAME}"
             return 0
         fi
     done
@@ -607,6 +675,8 @@ usage &>/dev/null || {
     echo "process-getopt." >&2 
     exit 1
 }
+
+load_help_fmt
 
 # normally, this is called without args - but we can also respond to
 # normal options too!

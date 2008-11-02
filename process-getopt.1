@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.5 2008/10/31 06:47:39 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.6 2008/11/02 05:05:54 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -8,7 +8,7 @@ process-getopt \- a wrapper around getopt
 .B process-getopt
 .RB "[\|" "options" "\|]"
 .P
-or when sourced:
+and (more usefully) when sourced:
 .P
 .B process_getopt_version
 .br
@@ -22,6 +22,16 @@ or when sourced:
 \fBprocess_opts\fP [ \fIargs\fP ]
 .br
 \fBprint_all_opts\fP
+.br
+\fBget_opt_letter\fP \fIname\fP
+.br
+\fBget_opt_string\fP \fIname\fP
+.br
+\fBget_opt_sarg\fP \fIname\fP
+.br
+\fBget_opt_larg\fP \fIname\fP
+.br
+\fBget_opt_name\fP \fIoption\fP
 .br
 .ad b
 .hy 0
@@ -129,7 +139,8 @@ must be given.
 Note that the order of printing the options in the help and man pages
 follows the order of definition by
 .BR add_opt .
-The standard options are printed after the others.
+The standard options are usually printed after the others by calling
+.BR print_all_opts .
 .IP
 Before
 .B add_opt
@@ -166,11 +177,11 @@ prints a skeleton
 .BR man (1)
 page on stdout and exits. This provides only a starting point for a
 typical man page, but at least all the options are formatted, saving a
-fair amout of fiddly work. It should probably be called once the
+fair amount of fiddly work. It should probably be called once the
 script is more or less finished before using the skeleton to produce a
 final manual page.
 .TP
-\fBcall_getopt\fR \fI"$@"\fP
+\fBcall_getopt\fR [ \fI"$@"\fP ]
 Uses the option data created by
 .B add_opt
 to assemble arguments to be passed to
@@ -179,7 +190,7 @@ and then calls it to re\-order the arguments. See
 .BR getopt (1)
 for full details.
 .TP
-.B \fBprocess_opts\fR \fI"$@"\fP
+\fBprocess_opts\fR [ \fI"$@"\fP ]
 Takes each option from the command line and calls the callback
 function for that option (previously stored by
 .BR add_opt )
@@ -188,9 +199,42 @@ argument, if appropriate. It is up to the callback function to take
 the correct action on receiving the option eg by setting a boolean or
 storing the value.
 .TP
-.B \fBprint_all_opts\fR \fI"$@"\fP
+\fBprint_all_opts\fR [ \fI"$@"\fP ]
 Prints all the options in a neatly formatted list.
 Normally called from the caller's usage function.
+.TP
+\fBget_opt_letter\fR \fIname\fP
+Prints the option letter (if any) assigned to the option \fIname\fP.
+Available only after
+.BR add_opt , 
+of course. This is also available in the variable \fISOPT_$NAME\fP (or
+\fISOPTA_$NAME\fP, if the option takes an argument).
+.TP
+\fBget_opt_string\fR \fIname\fP
+Prints the long option string (if any) assigned to the option \fIname\fP.
+Available only after
+.BR add_opt , 
+of course. This is also available in the variable \fILOPT_$NAME\fP (or
+\fILOPTA_$NAME\fP, if the option takes an argument).
+.TP
+\fBget_opt_sarg\fR \fIname\fP
+Prints the argument label assigned to the short option \fIname\fP.
+Available only after
+.BR add_opt , 
+of course. This is also available in the variable
+\fIARG_SOPTA_NAME\fP.
+.TP
+\fBget_opt_larg\fR \fIname\fP
+Prints the argument label assigned to the long option \fIname\fP.
+Available only after
+.BR add_opt , 
+of course. This is also available in the variable \fIARG_LOPTA_NAME\fP.
+.TP
+\fBget_opt_name\fR \fIopt\fP
+Prints the name of the option that uses the letter or long string
+\fIopt\fP (without the leading \- or \-\-). Available only after
+.BR add_opt , 
+of course.
 .SH OPTIONS
 .TP
 .B \fB\-h\fR, \fB\-\-help\fR

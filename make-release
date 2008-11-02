@@ -25,7 +25,7 @@ DIR=process-getopt-$VERSION
 rm -rf $DIR
 mkdir -p $DIR/share/man/man1 $DIR/bin
 
-SCRIPTS="process-getopt boilerplate example-script"
+SCRIPTS="process-getopt boilerplate example-script testecho"
 MANS="process-getopt.1"
 
 cp -p README $DIR/README
