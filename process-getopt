@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.5 2008/11/02 05:05:54 bhepple Exp $
+# $Id: process-getopt,v 1.6 2008/11/02 10:09:27 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -119,7 +119,7 @@ process_getopt_usage() {
 # and command-options, eg. openssl -n rsa -b arg arg etc We'd use
 # process-getopt with STOP_ON_FIRST_NON_OPT set to process the global
 # options then call clean_process_getopt and then use process-getopt
-# again to process the command options. Not yet tested.
+# again to process the command options. 
 clean_process_getopt() {
     unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
     unset __PG_OPTION_LIST
@@ -335,7 +335,7 @@ print_opt_man() {
 
 print_man_page() {
     cat <<EOF
-.\" $Id: process-getopt,v 1.5 2008/11/02 05:05:54 bhepple Exp $
+.\" $Id: process-getopt,v 1.6 2008/11/02 10:09:27 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC

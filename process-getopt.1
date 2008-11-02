@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.6 2008/11/02 05:05:54 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.7 2008/11/02 10:09:27 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -31,7 +31,11 @@ and (more usefully) when sourced:
 .br
 \fBget_opt_larg\fP \fIname\fP
 .br
+\fBget_opt_desc\fP \fIname\fP
+.br
 \fBget_opt_name\fP \fIoption\fP
+.br
+\fBclean_process_getopt\fP
 .br
 .ad b
 .hy 0
@@ -206,35 +210,36 @@ Normally called from the caller's usage function.
 \fBget_opt_letter\fR \fIname\fP
 Prints the option letter (if any) assigned to the option \fIname\fP.
 Available only after
-.BR add_opt , 
-of course. This is also available in the variable \fISOPT_$NAME\fP (or
-\fISOPTA_$NAME\fP, if the option takes an argument).
+.BR add_opt .
 .TP
 \fBget_opt_string\fR \fIname\fP
 Prints the long option string (if any) assigned to the option \fIname\fP.
 Available only after
-.BR add_opt , 
-of course. This is also available in the variable \fILOPT_$NAME\fP (or
-\fILOPTA_$NAME\fP, if the option takes an argument).
+.BR add_opt .
 .TP
 \fBget_opt_sarg\fR \fIname\fP
 Prints the argument label assigned to the short option \fIname\fP.
 Available only after
-.BR add_opt , 
-of course. This is also available in the variable
-\fIARG_SOPTA_NAME\fP.
+.BR add_opt .
 .TP
 \fBget_opt_larg\fR \fIname\fP
 Prints the argument label assigned to the long option \fIname\fP.
 Available only after
-.BR add_opt , 
-of course. This is also available in the variable \fIARG_LOPTA_NAME\fP.
+.BR add_opt .
+.TP
+\fBget_opt_desc\fR \fIname\fP
+Prints the description assigned to the option \fIname\fP.
+Available only after
+.BR add_opt .
 .TP
 \fBget_opt_name\fR \fIopt\fP
 Prints the name of the option that uses the letter or long string
 \fIopt\fP (without the leading \- or \-\-). Available only after
-.BR add_opt , 
-of course.
+.TP
+\fBclean_process_getopt\fR
+Cleans up process_getopt's address space ready for another bout of
+option processing. See \fBcommand_processor\fP for a sample of use.
+.BR add_opt . 
 .SH OPTIONS
 .TP
 .B \fB\-h\fR, \fB\-\-help\fR
@@ -314,7 +319,7 @@ The default is:
 short\-opt\-col=2,long\-opt\-col=6,opt\-doc\-col=29,rmargin=79
 .TP
 .B STOP_ON_FIRST_NON_OPT
-If this is set and exported, then 
+If this is set, then 
 .BR getopt (1) 
 will stop processing options
 as soon as the first non-option argument is reached without the user
@@ -334,30 +339,6 @@ has
 then we can write:
 .IP
 \fCmy_sudo ls -l /root\fP
-.P
-After "add_opt NAME etc" has been called, the following environment
-parameters are available for future use in the program:
-.TP
-.B DESC_OPT_$NAME
-The description string for the option.
-.TP
-.B SOPT_$NAME
-The short option letter (if the option takes no argument).
-.TP
-.B SOPTA_$NAME
-The short option letter (if the option takes an argument).
-.TP
-.B LOPT_$NAME
-The long option word (if the option takes no argument).
-.TP
-.B LOPTA_$NAME
-The long option word (if the option takes an argument).
-.TP
-.B ARG_SOPTA_$NAME
-The short option parameter name (if the option takes an argument).
-.TP
-.B ARG_LOPTA_$NAME
-The long option parameter name (if the option takes an argument).
 .SH "FILES"
 .SH "EXAMPLES"
 See
@@ -366,6 +347,9 @@ in this package for a documented sample of use.
 See
 .BR boilerplate (1) 
 in this package for a minimalist boilerplate.
+See
+.BR testecho (1)
+in this package for a simple test program
 .SH "NOTES"
 .B process-getopt
 is designed to be portable to versions of
