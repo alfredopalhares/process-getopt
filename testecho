@@ -1,0 +1,138 @@
+#!/bin/sh
+
+# http://bhepple.freeshell.org
+# http://process-getopt.sourceforge.net
+# $Id: testecho,v 1.1 2008/11/04 09:14:44 bhepple Exp $
+
+# A test script for process-getopt - just echos options and args
+
+PROG=$(basename $0)
+DIR=$(dirname $0)
+VERSION="1.2"
+VERBOSE=""
+ARGUMENTS=""
+SHORT_DESC="echos options and args to stdout"
+USAGE="\
+$SHORT_DESC.
+"
+
+TMP="/tmp/tmp$$.tmp"
+trap "/bin/rm -f $TMP" EXIT 
+
+# process-getopt needs to be able to call `usage':
+usage() {
+    echo "Usage: $PROG [ OPTIONS ] $ARGUMENTS"
+    echo "$USAGE"
+    echo
+    echo "Options:"
+    print_all_opts
+}
+
+# Pull in the process-getopt code - as long as it's somewhere on $PATH
+OLD_PATH="$PATH"
+PATH=".:$PATH:$DIR"
+PG=$(type process-getopt |cut -d' ' -f 3)
+PATH="$OLD_PATH"
+[ "$PG" ] || exit 1
+source $PG
+
+# option helper functions:
+SLOT=""
+SLOT_func() { [ "$1" ] && SLOT="yes" && echo VERBOSE=$SOPT_VERBOSE; }
+add_opt SLOT "boolean option" s "" slot 
+
+TOKEN=""
+TOKEN_func() { [ "$1" ] && TOKEN="$2"; }
+add_opt TOKEN "option that takes a value" t n token number
+
+LONGONLY=""
+LONGONLY_func() { [ "$1" ] && LONGONLY="$2"; }
+add_opt LONGONLY "long option without short option" "" "" "long-only" "value"
+
+COUNTED=0
+COUNTED_func() {  [ "$1" ] && (( COUNTED++ )); }
+add_opt COUNTED "an option which increments every time it is given" c
+
+add_std_opts # define the standard options --help etc
+
+# Call getopt:
+# export STOP_ON_FIRST_NON_OPT="yes" # set this if desired - see doco
+TEMP=$(call_getopt "$@") || exit 1
+eval set -- "$TEMP"
+process_opts "$@"
+shift "$?"
+
+[ "$SLOT" ] && echo "SLOT option (-$(get_opt_letter SLOT), --$(get_opt_string SLOT))"
+[ "$TOKEN" ] && echo "TOKEN option (-$(get_opt_letter TOKEN) \"$TOKEN\", --$(get_opt_string TOKEN)=\"$TOKEN\")"
+[ "$LONGONLY" ] && echo "LONGONLY option (--$(get_opt_string LONGONLY)=\"$LONGONLY\")"
+[ "$COUNTED" -gt 0 ] && echo "COUNTED option (-$(get_opt_letter COUNTED) = $COUNTED)"
+[ "$VERBOSE" ] && echo "VERBOSE option (-$(get_opt_letter VERBOSE), --$(get_opt_string VERBOSE))"
+
+# At this point, all the options have been processed and removed from
+# the arg list. We can now process $@ as arguments to the program.
+
+# MAIN PROCESSING
+echo "Remaining args:"
+for arg in "$@"; do echo "\"$arg\""; done
+
+echo
+echo "Testing print utilities:"
+print_short_args
+echo
+print_long_args
+echo
+print_all_args
+echo
+
+echo "SOPT_SLOT=-$SOPT_SLOT"
+echo "ARG_SOPTA_TOKEN=$ARG_SOPTA_TOKEN"
+exit 0
+
+# test cases:
+./testecho -vs a b c --long-only 1 -c -c -c -cccc
+SLOT option (-s, --slot)
+LONGONLY option (--long-only="1")
+COUNTED option (-c) = 7
+VERBOSE option (-v, --verbose)
+Remaining args:
+"a"
+"b"
+"c"
+
+STOP_ON_FIRST_NON_OPT=1 ./testecho -vs a b c --long-only 1 -c -c -c -cccc
+SLOT option (-s, --slot)
+VERBOSE option (-v, --verbose)
+Remaining args:
+"a"
+"b"
+"c"
+"--long-only"
+"1"
+"-c"
+"-c"
+"-c"
+"-cccc"
+
+./testecho -vs a "b c" --long-only=1 -c -c -c -cccc
+SLOT option (-s, --slot)
+LONGONLY option (--long-only="1")
+COUNTED option (-c) = 7
+VERBOSE option (-v, --verbose)
+Remaining args:
+"a"
+"b c"
+
+./testecho -h
+Usage: testecho [ OPTIONS ]
+echos options and args to stdout.
+
+
+Options:
+  -s, --slot                boolean option
+  -t n, --token=number      option that takes a value
+  --long-only=value         long option without short option
+  -c                        an option which increments every time it is given
+  -h, --help                print this help and exit
+  -V, --version             print version and exit
+  -v, --verbose             do it verbosely
+  --                        explicitly ends the options
