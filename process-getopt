@@ -17,7 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.6 2008/11/02 10:09:27 bhepple Exp $
+# $Id: process-getopt,v 1.7 2008/11/04 09:13:59 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -303,6 +303,109 @@ get_opt_desc() {
     echo -n "${!L}"
 }
 
+# prints only short options that take no parameter
+print_short_flags() {
+    local NAME
+    local FLAGS=""
+
+    for NAME in $__PG_OPTION_LIST; do
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local L=$(get_opt_letter $NAME)
+        [ "$L" ] || continue
+        local A=$(get_opt_sarg $NAME)
+        [ "$A" ] && continue
+        FLAGS="$FLAGS$L"
+    done
+    echo -n "$FLAGS"
+}
+
+# prints only long options that take no parameter
+print_long_flags() {
+    local NAME
+    local FLAGS=""
+    local SPACE=""
+
+    for NAME in $__PG_OPTION_LIST; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local L=$(get_opt_string $NAME)
+        [ "$L" ] || continue
+        local A=$(get_opt_larg $NAME)
+        [ "$A" ] && continue
+        printf -- "$SPACE--%s" $L
+        SPACE=" "
+    done
+    echo -n "$FLAGS"
+}
+
+# prints only short options that take a parameter
+print_short_args() {
+    local MAN=$1
+
+    local NAME
+    for NAME in $__PG_OPTION_LIST; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        SARG=$(get_opt_sarg "$NAME")
+        [ "$SARG" ] || continue
+        SOPT=$(get_opt_letter "$NAME")
+        [ "$MAN" ] && FMT='[\\fB\-%s\\fP \\fI%s\\fP]' || FMT="[-%s <%s>]"
+        printf -- "$FMT" $SOPT $SARG
+    done
+    echo -n "$FLAGS"
+}
+
+# prints only long options that take a parameter
+print_long_args() {
+    local MAN=$1
+
+    local NAME
+    for NAME in $__PG_OPTION_LIST; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        LARG=$(get_opt_larg "$NAME")
+        [ "$LARG" ] || continue
+        LOPT=$(get_opt_string "$NAME")
+        [ "$MAN" ] && FMT='[\\fB\-\-%s\\fP=\\fI%s\\fP]' || FMT="[--%s=<%s>]"
+        printf -- "$FMT" $LOPT $LARG
+    done
+}
+
+# prints short and long options that take a parameter
+print_all_args() {
+    local MAN=$1
+
+    local NAME
+    for NAME in $__PG_OPTION_LIST; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        SARG=$(get_opt_sarg "$NAME")
+        LARG=$(get_opt_larg "$NAME")
+        [ "$SARG$LARG" ] || continue
+
+        SOPT=$(get_opt_letter "$NAME")
+        LOPT=$(get_opt_string "$NAME")
+
+        echo -n " ["
+        [ "$MAN" ] && FMT='\\fB\-%s\\fP \\fI%s\\fP' || FMT="-%s <%s>"
+        [ "$SARG" ] && printf -- "$FMT" $SOPT $SARG
+        [ "$SARG" -a "$LARG" ] && echo -n ","
+        [ "$MAN" ] && FMT='\\fB\-\-%s\\fP=\\fI%s\\fP' || FMT="--%s=<%s>"
+        [ "$LARG" ] && printf -- "$FMT" $LOPT $LARG
+        echo -n "]"
+    done
+}
+
+# print the help line for all options
+print_all_opts() {
+    local NAME
+    for NAME in $__PG_OPTION_LIST; do 
+        print_opt $NAME
+    done
+}
+
+# print the option line for a man page
 print_opt_man() {
     local NAME="$1"
     local L
@@ -322,28 +425,41 @@ print_opt_man() {
     echo ".TP"
     echo -n ".B "
     # NB 'echo -n "-E"' swallows the -E!! and it has no --
-    [ "$SOPT" ] && printf -- "%s" "\\fB\\-$SOPT\\fR"
+    [ "$SOPT" ] && printf -- '\\fB\-%s\\fP' $SOPT
     [ "$SOPT" ] && [ "$SARG" ] && echo -n " \\fI$SARG\\fR"
     if [ "$__PG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && echo -n ", "
-        [ "$LOPT" ] && printf -- "%s" "\\fB\\-\\-$LOPT\fR"
+        [ "$LOPT" ] && printf -- '\\fB\-\-%s\\fP' $LOPT
         [ "$LOPT" ] && [ "$LARG" ] && echo -n "\\fI=$LARG\\fR"
     fi
     echo
     echo "$DESC"
 }
 
+# Create a skeleton man page - uses these parameters if defined:
+# USAGE
+# ARGUMENTS
+# SHORT_DESC
 print_man_page() {
+    FLAGS=$(print_short_flags)
+    [ "$FLAGS" ] && FLAGS='
+.RB "[" \-'$FLAGS' "]"'
+    LFLAGS=$(print_long_flags | sed 's/-/\\-/g')
+    [ "$LFLAGS" ] && LFLAGS='
+[
+.B '$LFLAGS'
+]'
+    ARGS=$(print_all_args man)
+
     cat <<EOF
-.\" $Id: process-getopt,v 1.6 2008/11/02 10:09:27 bhepple Exp $
+.\" $Id: process-getopt,v 1.7 2008/11/04 09:13:59 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
 .SH SYNOPSIS
 .hy 0
 .na
-.B $PROG
-.RB "[\|" "options" "\|]" 
+.B $PROG$FLAGS$LFLAGS$ARGS
 $ARGUMENTS
 .ad b
 .hy 0
@@ -502,60 +618,7 @@ print_opt() {
     unset __PG_INDENT
 }
 
-print_flags() {
-    local NAME
-    local FLAGS=""
-
-    for NAME in $__PG_OPTION_LIST; do 
-        FLAGS="$FLAGS$(get_opt_letter $NAME)"
-    done
-    echo -n "$FLAGS"
-}
-
-print_short_args() {
-    local NAME
-
-    for NAME in $__PG_OPTION_LIST; do 
-        SARG=$(get_opt_sarg "$NAME")
-        [ "$SARG" ] || continue
-        SOPT=$(get_opt_letter "$NAME")
-        printf -- " -%s <%s>" $SOPT $SARG
-    done
-    echo -n "$FLAGS"
-}
-
-print_long_args() {
-    local NAME
-
-    for NAME in $__PG_OPTION_LIST; do 
-        LARG=$(get_opt_larg "$NAME")
-        [ "$LARG" ] || continue
-        LOPT=$(get_opt_string "$NAME")
-        printf -- " --%s=<%s>" $LOPT $LARG
-    done
-}
-
-print_all_args() {
-    local NAME
-
-    for NAME in $__PG_OPTION_LIST; do 
-        SARG=$(get_opt_sarg "$NAME")
-        SOPT=$(get_opt_letter "$NAME")
-        LARG=$(get_opt_larg "$NAME")
-        LOPT=$(get_opt_string "$NAME")
-
-        [ "$SARG" ] && printf -- " -%s <%s>" $SOPT $SARG
-        [ "$LARG" ] && printf -- " --%s=<%s>" $LOPT $LARG
-    done
-}
-
-print_all_opts() {
-    local NAME
-    for NAME in $__PG_OPTION_LIST; do 
-        print_opt $NAME
-    done
-}
-
+# honour GNU ARGP_HELP_FMT parameter
 load_help_fmt() {
     [ "$ARGP_HELP_FMT" ] || return
     OFS="$IFS"

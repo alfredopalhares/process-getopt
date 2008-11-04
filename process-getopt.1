@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.7 2008/11/02 10:09:27 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.8 2008/11/04 09:13:59 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -22,6 +22,16 @@ and (more usefully) when sourced:
 \fBprocess_opts\fP [ \fIargs\fP ]
 .br
 \fBprint_all_opts\fP
+.br
+\fBprint_short_flags\fP
+.br
+\fBprint_long_flags\fP
+.br
+\fBprint_short_args\fP [ \fIman\fP ]
+.br
+\fBprint_long_args\fP [ \fIman\fP ]
+.br
+\fBprint_all_args\fP [ \fIman\fP ]
 .br
 \fBget_opt_letter\fP \fIname\fP
 .br
@@ -207,6 +217,34 @@ storing the value.
 Prints all the options in a neatly formatted list.
 Normally called from the caller's usage function.
 .TP
+\fBprint_short_flags\fP
+Prints a concatenated list of all the short option letters which do not
+take a parameter. These can be considered flags or booleans. They are
+listed in the order they were added.
+.TP
+\fBprint_long_flags\fP
+Prints a concatenated list of all the long option strings which do not
+take a parameter. These can be considered flags or booleans. They are
+listed in the order they were added.
+.TP
+\fBprint_short_args\fP [ \fIman\fP ]
+Prints a concatenated list of all the short options which take a
+parameter together with the parameter name. They are listed in the
+order they were added. If any argument is given then the list is
+formatted for a man page.
+.TP
+\fBprint_long_args\fP [ \fIman\fP ]
+Prints a concatenated list of all the long options which take a
+parameter together with the parameter name. They are listed in the
+order they were added. If any argument is given then the list is
+formatted for a man page.
+.TP
+\fBprint_all_args\fP [ \fIman\fP ]
+Prints a concatenated list of all the options which take a parameter
+together with the parameter name. They are listed in the order they
+were added. If any argument is given then the list is formatted for a
+man page.
+.TP
 \fBget_opt_letter\fR \fIname\fP
 Prints the option letter (if any) assigned to the option \fIname\fP.
 Available only after
@@ -237,9 +275,10 @@ Prints the name of the option that uses the letter or long string
 \fIopt\fP (without the leading \- or \-\-). Available only after
 .TP
 \fBclean_process_getopt\fR
-Cleans up process_getopt's address space ready for another bout of
+Cleans up 
+.BR process_getopt (1)'s 
+address space ready for another bout of
 option processing. See \fBcommand_processor\fP for a sample of use.
-.BR add_opt . 
 .SH OPTIONS
 .TP
 .B \fB\-h\fR, \fB\-\-help\fR
@@ -283,8 +322,9 @@ and it will be set to non\-null if the
 option is given.
 .TP 
 .B ARGUMENTS
-Optional. This should be set to the list of argument that the script
-can take. It should also be used in the script's USAGE parameter.
+Optional. This should be set to the list of arguments that the script
+can take (ie the parameters after the options). It should also be used
+in the script's USAGE parameter.
 .TP
 .B SHORT_DESC
 Optional. This should be set to a one line description that will be
@@ -349,7 +389,14 @@ See
 in this package for a minimalist boilerplate.
 See
 .BR testecho (1)
-in this package for a simple test program
+in this package for a simple test program.
+See
+.BR command-processor (1)
+in this package for a slightly more complex program that accepts
+commands which can themselves take options (like
+.BR openssh (1)
+or
+.BR cvs (1)).
 .SH "NOTES"
 .B process-getopt
 is designed to be portable to versions of
@@ -357,7 +404,9 @@ is designed to be portable to versions of
 that do not support long options, although this has not been
 extensively tested.
 .SH "BUGS"
-The -V,--verbose and -- options are not very useful.
+The -V,--verbose and -- options are not very useful when calling
+.BR process-getopt (1)
+as a script - but then, that's a bit lame anyway.
 .SH "SEE ALSO"
 .BR getopt (1)
 .SH "AUTHOR"
