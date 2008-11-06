@@ -2,58 +2,74 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: boilerplate,v 1.5 2008/10/31 06:47:39 bhepple Exp $
+# $Id: boilerplate,v 1.6 2008/11/06 16:41:10 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
+# where it says  # CUSTOMISE
+
+check_and_process_opts() {
+    local NO_OPTS TEMP PG
+
+    # avoid the overhead of process-getopt if there are no options:
+    NO_OPTS="yes"
+    for i in "$@"; do
+        case "$i" in
+            -*)
+                NO_OPTS=""
+                break
+                ;;
+        esac
+    done
+    [ "$NO_OPTS" ] && return 1
+
+    # source process-getopt:
+    PG=$(PATH="$PATH:."; type process-getopt |cut -d' ' -f 3)
+    [ "$PG" ] || exit 1
+    source $PG
+
+    # define our options: # CUSTOMISE
+    SLOT_func()   { [ "$1" ] && SLOT="yes"; }
+    add_opt SLOT "boolean option" s "" slot 
+    TOKEN_func()  { [ "$1" ] && TOKEN="$2"; }
+    add_opt TOKEN "option that takes a value" t n token number
+
+    # define the standard options --help etc:
+    add_std_opts 
+
+    # process the command line:
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@"
+    shift "$?"
+
+    # return the new command line (stripped of options):
+    NEW_ARGS=( "$@" )
+    return 0
+}
+
+##########################
+#         M A I N        #
+##########################
 
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION="1.2"
+VERSION="1.2" # CUSTOMISE
 VERBOSE=""
-ARGUMENTS=""
-SHORT_DESC=""
-USAGE="\
-$SHORT_DESC.
-"
+ARGUMENTS="<files>" # CUSTOMISE
+SHORT_DESC="Short description. " # CUSTOMISE
+USAGE="More detailed description." # CUSTOMISE
 
 TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
 
-# process-getopt needs to be able to call `usage':
-usage() {
-    echo "Usage: $PROG [ OPTIONS ] $ARGUMENTS"
-    echo "$USAGE"
-    echo
-    echo "Options:"
-    print_all_opts
-}
-
-# Pull in the process-getopt code - as long as it's somewhere on $PATH
-OLD_PATH="$PATH"
-PATH="$PATH:$DIR:."
-PG=$(type process-getopt |cut -d' ' -f 3)
-PATH="$OLD_PATH"
-[ "$PG" ] || exit 1
-source $PG
-
-# option helper functions: customise:
-SLOT_func()   { [ "$1" ] && SLOT="yes"; }
-TOKEN_func()  { [ "$1" ] && TOKEN="$2"; }
-add_opt SLOT "boolean option" s "" slot 
-add_opt TOKEN "option that takes a value" t n token number
-add_std_opts # define the standard options --help etc
-
-# Call getopt:
-# export STOP_ON_FIRST_NON_OPT="yes" # set this if desired - see doco
-TEMP=$(call_getopt "$@") || exit 1
-eval set -- "$TEMP"
-process_opts "$@"
-shift "$?"
+NEW_ARGS=( )
+check_and_process_opts "$@" && set -- "${NEW_ARGS[@]}"
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.
 
 # MAIN PROCESSING
+# CUSTOMISE:
 echo "Remaining args:"
 for arg in "$@"; do echo "\"$arg\""; done
 

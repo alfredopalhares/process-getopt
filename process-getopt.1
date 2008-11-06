@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.8 2008/11/04 09:13:59 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.9 2008/11/06 16:41:10 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -72,7 +72,7 @@ These inconsistencies are particularly likely to creep in after
 maintenance is done on scripts. In any case, this part of the
 code is tedious to write and is often skimped.
 .P
-.B process-getopt
+.BR process-getopt (1)
 is intended to eliminate these errors and to automate the creation of
 the
 .BR getopt (1)
@@ -83,16 +83,15 @@ probability that
 .BR getopt (1)
 is used and that documentation is written.
 .P
-.B process-getopt
+.BR process-getopt (1)
 should be sourced by a 
 .BR bash (1)
 script and the various functions above are then called to process
 command\-line options. Some checking is done by
-.B process-getopt
-as it starts up, most notably that the script has defined a `usage'
-function that it can call.
+.BR process-getopt (1)
+as it starts up.
 .P
-.B process-getopt
+.BR process-getopt (1)
 allows the script to:
 .IP \(bu 2
 define short and long options in one central place together with descriptions. 
@@ -102,12 +101,16 @@ case statement processing the user's options and the help/man pages
 .IP \(bu
 be easy to use and maintain
 .IP \(bu
-automate help\-page and man\-page printing
+automate help\-page and man\-page printing \- in fact,
+.BR process-getopt (1)
+provides a default
+.BR usage ()
+function which suffices for most simple scripts.
 .SH FUNCTIONS
 .TP
 .B process_getopt_version
 Prints the version of
-.BR process-getopt .
+.BR process-getopt (1).
 This will always be a string of two numbers of the form
 .B 1.0
 and calling scripts can use this string to ensure they have the right
@@ -138,7 +141,7 @@ option must be given.
 For short and long options, if the option takes a value, then define 
 .BR arg_name .
 This allows
-.B process-getopt
+.BR process-getopt (1)
 to look for that value as well as print the argument name in the help
 and man pages. If
 .BR arg_name
@@ -186,7 +189,7 @@ Adds the 'standard options', namely
 is a 
 .I silent
 option, not printed in the help or man pages. It is primarily a tool for the developer and when the script is invoked with this option,
-.B process-getopt
+.BR process-getopt (1)
 prints a skeleton
 .BR man (1)
 page on stdout and exits. This provides only a starting point for a
@@ -301,7 +304,7 @@ off the argument list in order to remove the options and their
 arguments.
 .SH "ENVIRONMENT"
 The following environment parameters are recognised by
-.BR process-getopt :
+.BR process-getopt (1):
 .TP
 .B PROG
 Mandatory. This should be set to the program name, typically
@@ -324,17 +327,21 @@ option is given.
 .B ARGUMENTS
 Optional. This should be set to the list of arguments that the script
 can take (ie the parameters after the options). It should also be used
-in the script's USAGE parameter.
+in the script's usage() function, if any.
 .TP
 .B SHORT_DESC
 Optional. This should be set to a one line description that will be
-inserted into the man page. It could also be used in the
-script's `usage' function.
+inserted into the man page. It should also be used in the
+script's `usage' function, if any.
 .TP
 .B USAGE
 Optional. This should be a long string describing the command. It will
-be inserted into the man pages. It should also be used in the
-script's `usage' function.
+be inserted into the help and man pages. It should also be used in the
+script's `usage' function, if any. The text will be processed through
+.BR fmt (1)
+so for best results each paragraph should be coded on a single line. See the
+.B EXAMPLES
+section.
 .TP
 .B ARGP_HELP_FMT
 Optional. This is the same environment variable recognised by GNU's
@@ -398,7 +405,18 @@ commands which can themselves take options (like
 or
 .BR cvs (1)).
 .SH "NOTES"
-.B process-getopt
+If the calling program defines a
+.BR usage ()
+function then it is called in response to the --help option. If not, a default usage function is provided which relies on the environment parameters and the options added by
+.BR add_opt ()
+to automatically format a help page.
+.P
+.BR process-getopt (1)
+uses
+.BR tput (1)
+to determine the width of the terminal for the help page.
+.P
+.BR process-getopt (1)
 is designed to be portable to versions of
 .BR getopt (1)
 that do not support long options, although this has not been

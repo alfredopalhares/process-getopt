@@ -2,74 +2,81 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: testecho,v 1.1 2008/11/04 09:14:44 bhepple Exp $
+# $Id: testecho,v 1.2 2008/11/06 16:41:10 bhepple Exp $
 
 # A test script for process-getopt - just echos options and args
+
+check_and_process_opts() {
+    local NO_OPTS TEMP PG
+
+#    # avoid the overhead of process-getopt if there are no options:
+#    NO_OPTS="yes"
+#    for i in "$@"; do
+#        case "$i" in
+#            -*)
+#                NO_OPTS=""
+#                break
+#                ;;
+#        esac
+#    done
+#    [ "$NO_OPTS" ] && return 1
+
+    PG=$(PATH=".:$PATH:$DIR"; type process-getopt |cut -d' ' -f 3)
+    [ "$PG" ] || exit 1
+    source $PG
+
+    SLOT_func() { [ "$1" ] && SLOT="yes" && echo VERBOSE=$SOPT_VERBOSE; }
+    add_opt SLOT "boolean option" s "" slot 
+
+    TOKEN_func() { [ "$1" ] && TOKEN="$2"; }
+    add_opt TOKEN "option that takes a value" t n token number
+
+    LONGONLY_func() { [ "$1" ] && LONGONLY="$2"; }
+    add_opt LONGONLY "long option without short option" "" "" "long-only" "value"
+
+    COUNTED_func() {  [ "$1" ] && (( COUNTED++ )); }
+    add_opt COUNTED "an option which increments every time it is given" c
+
+    add_std_opts # define the standard options --help etc
+
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@"
+    shift "$?"
+    NEW_ARGS=( "$@" )
+    return 0
+}
+
+##########################
+#         M A I N        #
+##########################
 
 PROG=$(basename $0)
 DIR=$(dirname $0)
 VERSION="1.2"
 VERBOSE=""
 ARGUMENTS=""
-SHORT_DESC="echos options and args to stdout"
-USAGE="\
-$SHORT_DESC.
-"
+SHORT_DESC="Echos options and args to stdout. "
+USAGE=""
 
 TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
-
-# process-getopt needs to be able to call `usage':
-usage() {
-    echo "Usage: $PROG [ OPTIONS ] $ARGUMENTS"
-    echo "$USAGE"
-    echo
-    echo "Options:"
-    print_all_opts
-}
-
-# Pull in the process-getopt code - as long as it's somewhere on $PATH
-OLD_PATH="$PATH"
-PATH=".:$PATH:$DIR"
-PG=$(type process-getopt |cut -d' ' -f 3)
-PATH="$OLD_PATH"
-[ "$PG" ] || exit 1
-source $PG
-
-# option helper functions:
-SLOT=""
-SLOT_func() { [ "$1" ] && SLOT="yes" && echo VERBOSE=$SOPT_VERBOSE; }
-add_opt SLOT "boolean option" s "" slot 
-
-TOKEN=""
-TOKEN_func() { [ "$1" ] && TOKEN="$2"; }
-add_opt TOKEN "option that takes a value" t n token number
-
-LONGONLY=""
-LONGONLY_func() { [ "$1" ] && LONGONLY="$2"; }
-add_opt LONGONLY "long option without short option" "" "" "long-only" "value"
-
 COUNTED=0
-COUNTED_func() {  [ "$1" ] && (( COUNTED++ )); }
-add_opt COUNTED "an option which increments every time it is given" c
+LONGONLY=""
+TOKEN=""
+SLOT=""
 
-add_std_opts # define the standard options --help etc
+NEW_ARGS=( )
+check_and_process_opts "$@" && set -- "${NEW_ARGS[@]}"
 
-# Call getopt:
-# export STOP_ON_FIRST_NON_OPT="yes" # set this if desired - see doco
-TEMP=$(call_getopt "$@") || exit 1
-eval set -- "$TEMP"
-process_opts "$@"
-shift "$?"
+# At this point, all the options have been processed and removed from
+# the arg list. We can now process $@ as arguments to the program.
 
 [ "$SLOT" ] && echo "SLOT option (-$(get_opt_letter SLOT), --$(get_opt_string SLOT))"
 [ "$TOKEN" ] && echo "TOKEN option (-$(get_opt_letter TOKEN) \"$TOKEN\", --$(get_opt_string TOKEN)=\"$TOKEN\")"
 [ "$LONGONLY" ] && echo "LONGONLY option (--$(get_opt_string LONGONLY)=\"$LONGONLY\")"
 [ "$COUNTED" -gt 0 ] && echo "COUNTED option (-$(get_opt_letter COUNTED) = $COUNTED)"
 [ "$VERBOSE" ] && echo "VERBOSE option (-$(get_opt_letter VERBOSE), --$(get_opt_string VERBOSE))"
-
-# At this point, all the options have been processed and removed from
-# the arg list. We can now process $@ as arguments to the program.
 
 # MAIN PROCESSING
 echo "Remaining args:"
