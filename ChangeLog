@@ -1,2 +1,16 @@
+2008-11-07    <bhepple@freeshell.org>
+	* Fix option name uniqueness test
+	* Add default-usage function
+	* Add get_opt_* access functions
+	* Add print_* functions
+	* Change all scripts to package process-getopt functions in a
+	single function
+	* Add command-processor
+	* Add testecho
+2008-10-24     <bhepple@freeshell.org>
+	* Add ability for process-getopt to be called as a script (mainly
+	to get version)
+	* Recognise STOP_ON_FIRST_NON_OPT
+	* Various formatting fixes
 2008-08-15    <bhepple@freeshell.org>
 	* Initial version
