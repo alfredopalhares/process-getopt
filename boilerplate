@@ -2,7 +2,7 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: boilerplate,v 1.7 2008/11/06 23:48:22 bhepple Exp $
+# $Id: boilerplate,v 1.8 2008/11/12 05:32:57 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 # where it says  # CUSTOMISE
@@ -18,12 +18,15 @@ check_and_process_opts() {
                 NO_OPTS=""
                 break
                 ;;
+            *)
+                [ "$STOP_ON_FIRST_NON_OPT" ] && break
+                ;;
         esac
     done
     [ "$NO_OPTS" ] && return 1
 
     # source process-getopt:
-    PG=$(PATH="$PATH:."; type process-getopt |cut -d' ' -f 3)
+    PG=$(type process-getopt |cut -d' ' -f 3)
     [ "$PG" ] || exit 1
     source $PG
 
