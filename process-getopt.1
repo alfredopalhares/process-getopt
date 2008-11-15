@@ -1,4 +1,4 @@
-.\" $Id: process-getopt.1,v 1.9 2008/11/06 16:41:10 bhepple Exp $
+.\" $Id: process-getopt.1,v 1.10 2008/11/15 20:34:00 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -107,6 +107,18 @@ provides a default
 .BR usage ()
 function which suffices for most simple scripts.
 .SH FUNCTIONS
+Note that if you want to call one of the accessor functions
+.RB ( get_opt_letter (),
+.BR print_short_args (),
+\&... etc) when generating the help page, you can't call them within
+the 
+.B USAGE 
+parameter and so you won't be able to use the default
+.BR usage ()
+function. 
+Instead, you'll need to create a custom
+.BR usage ()
+function.
 .TP
 .B process_getopt_version
 Prints the version of
@@ -346,8 +358,8 @@ section.
 .B ARGP_HELP_FMT
 Optional. This is the same environment variable recognised by GNU's
 .BR argp (3)
-C function \- see http://www.gnu.org/software/libtool/manual/libc/Argp-User-Customization.html
-The following comma\-separated clauses are supported here:
+C function \- see http://www.gnu.org/software/libtool/manual/libc/Argp-User-Customization.html The following
+comma\-separated clauses are supported here:
 .IP 
 .B short\-opt\-col=n
 This prints the first short option in column n. The default is 2. 
@@ -446,3 +458,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+\" For emacs:
+\" Local Variables:
+\" eval:(setq filename (substring buffer-file-name (string-match "[-a-zA-Z0-9_.]+$" buffer-file-name)))
+\" eval:(setq basename (substring filename 0 (string-match "\\." filename)))
+\" eval:(setq compile-command (concat "groff -man -Tps " filename " | ps2pdf - " basename ".pdf"))
+\" End:
