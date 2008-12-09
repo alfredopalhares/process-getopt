@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.12 2008/12/09 00:58:40 bhepple Exp $
+# $Id: process-getopt,v 1.13 2008/12/09 03:57:22 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -402,7 +402,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.12 2008/12/09 00:58:40 bhepple Exp $
+.\" $Id: process-getopt,v 1.13 2008/12/09 03:57:22 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -460,6 +460,7 @@ add_std_opts() {
     add_opt HELP "print this help and exit" $HELP_option "" $HELP_loption
     add_opt VERSION "print version and exit" $VERSION_option "" "$VERSION_loption"
     add_opt VERBOSE "do it verbosely" $VERBOSE_option "" "$VERBOSE_loption"
+    add_opt QUIET "do it quietly (negates -$VERBOSE_option)" $QUIET_option "" "$QUIET_loption"
     add_opt PRINT_MAN_PAGE "" "" "" "$PRINTMAN_loption"
     add_opt END_OPTIONS "explicitly ends the options" "-"
 }
@@ -636,6 +637,12 @@ process_opts() {
             shift
             ;;
 
+        -$QUIET_option | --$QUIET_loption) 
+            VERBOSE=""
+            ((SHIFT_NUM++))
+            shift
+            ;;
+
         --$PRINTMAN_loption)
             print_man_page
             exit 0
@@ -727,6 +734,8 @@ HELP_loption="help"
 HELP_option="h"
 VERBOSE_loption="verbose"
 VERBOSE_option="v"
+QUIET_option="q"
+QUIET_loption="quiet"
 VERSION_loption="version"
 VERSION_option="V"
 PRINTMAN_loption="print-man-page"
@@ -740,6 +749,7 @@ __PG_RMARGIN=79
 # stubs to satisfy add_opt on standard opts:
 HELP_func() { :; }
 VERBOSE_func() { :; }
+QUIET_func() { :; }
 VERSION_func() { :; }
 PRINT_MAN_PAGE_func() { :; }
 END_OPTIONS_func() { :; }
