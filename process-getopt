@@ -1,5 +1,4 @@
 # -*- shell-script -*-
-
 # Copyright 2008 Bob Hepple
 #
 # This program is free software; you can redistribute it and/or modify
@@ -17,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.11 2008/11/12 05:36:41 bhepple Exp $
+# $Id: process-getopt,v 1.12 2008/12/09 00:58:40 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -154,14 +153,6 @@ add_opt () {
         exit 1
     }
 
-    # check it's not already in use
-    for OPT in $__PG_OPTION_LIST; do 
-        if [ "$NAME" = "$OPT" ]; then
-            echo "$PROG: option name \"$NAME\" is already in use" >&2
-            exit 1
-        fi
-    done
-
     # check that a helper function is available:
     ${NAME}$FUNC_SUFFIX 2>/dev/null; local STAT=$?
     if [ $STAT -eq 127 ]; then
@@ -175,15 +166,15 @@ add_opt () {
 
     [ "$SARG$LARG" ] && A="A" || A=""
 
-    if [ "$SOPT" ]; then
-        [ ${#SOPT} -ne 1 ] && {
-            echo "$PROG: short option \"$SOPT\" for option $NAME is not a \
-single character" >&2
+    # check it's not already in use
+    for OPT in $__PG_OPTION_LIST; do 
+        if [ "$NAME" = "$OPT" ]; then
+            echo "$PROG: option name \"$NAME\" is already in use" >&2
             exit 1
-        }
+        fi
         # check it's not already in use - cover the case of with and
         # without args:
-        for OPT in $__PG_OPTION_LIST; do 
+        if [ "$SOPT" ]; then
             for SUFFIX in "" "A"; do
                 L="SOPT${SUFFIX}_$OPT"
                 if [ "$SOPT" = "${!L}" ]; then
@@ -192,15 +183,8 @@ $OPT" >&2
                     exit 1
                 fi
             done
-        done
-        export SOPT${A}_$NAME="$SOPT"
-        [ "$SARG" ] && export ARG_SOPTA_$NAME="$SARG"
-    fi
-
-    if [ "$LOPT" ]; then
-        # check it's not already in use - cover the case of with and
-        # without args:
-        for OPT in $__PG_OPTION_LIST; do 
+        fi
+        if [ "$LOPT" ]; then
             for SUFFIX in "" "A"; do
                 L="LOPT${SUFFIX}_$OPT"
                 if [ "$LOPT" = "${!L}" ]; then
@@ -208,7 +192,20 @@ $OPT" >&2
                     exit 1
                 fi
             done
-        done
+        fi
+    done
+
+    if [ "$SOPT" ]; then
+        [ ${#SOPT} -ne 1 ] && {
+            echo "$PROG: short option \"$SOPT\" for option $NAME is not a \
+single character" >&2
+            exit 1
+        }
+        export SOPT${A}_$NAME="$SOPT"
+        [ "$SARG" ] && export ARG_SOPTA_$NAME="$SARG"
+    fi
+
+    if [ "$LOPT" ]; then
         export LOPT${A}_$NAME="$LOPT"
         [ "$LARG" ] && export ARG_LOPTA_$NAME="$LARG"
     fi
@@ -405,7 +402,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.11 2008/11/12 05:36:41 bhepple Exp $
+.\" $Id: process-getopt,v 1.12 2008/12/09 00:58:40 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
