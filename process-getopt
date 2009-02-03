@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.13 2008/12/09 03:57:22 bhepple Exp $
+# $Id: process-getopt,v 1.14 2009/02/03 07:01:25 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -402,7 +402,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.13 2008/12/09 03:57:22 bhepple Exp $
+.\" $Id: process-getopt,v 1.14 2009/02/03 07:01:25 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -571,7 +571,7 @@ print_opt() {
 
 # honour GNU ARGP_HELP_FMT parameter
 load_help_fmt() {
-    [ "$ARGP_HELP_FMT" ] || return
+    [ "$ARGP_HELP_FMT" ] || return 0
     OFS="$IFS"
     IFS=','
     set -- $ARGP_HELP_FMT
@@ -727,7 +727,7 @@ __PG_COLUMNS=`tput cols 2>/dev/null` || __PG_COLUMNS=80
 __PG_OPTION_LIST=""
 __PG_LONG_GETOPT=""
 # decide if this getopt supports long options:
-getopt --test &>/dev/null; __PG_STAT=$?
+getopt --test &>/dev/null || : ; __PG_STAT=$?
 [ $__PG_STAT -eq 4 ] && __PG_LONG_GETOPT="__PG_LONG_GETOPT_yes"
 
 HELP_loption="help"
