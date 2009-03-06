@@ -1,8 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: boilerplate,v 1.8 2008/11/12 05:32:57 bhepple Exp $
+# $Id: boilerplate,v 1.9 2009/03/06 07:02:23 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 # where it says  # CUSTOMISE
