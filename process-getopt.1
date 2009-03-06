@@ -1,4 +1,4 @@
-\" $Id: process-getopt.1,v 1.11 2008/12/09 03:57:22 bhepple Exp $
+\" $Id: process-getopt.1,v 1.12 2009/03/06 07:01:43 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -178,7 +178,7 @@ is called, a callback function named
 must have been defined.
 .BR add_opt
 will immediately call the callback function (with no arguments) to
-check for its presence. Later on if that option is given on the
+check for its presence. Later on, if that option is given on the
 command line, the callback function will be called from
 .B process_opts
 with 2 arguments, namely the option string that triggered the function
@@ -439,6 +439,11 @@ extensively tested.
 The -V,--verbose and -- options are not very useful when calling
 .BR process-getopt (1)
 as a script - but then, that's a bit lame anyway.
+.P
+You probably don't want to source
+.BR process-getopt (1)
+from the command line as it will log you off unless you have the
+prerequisite environment set up.
 .SH "SEE ALSO"
 .BR getopt (1)
 .SH "AUTHOR"
