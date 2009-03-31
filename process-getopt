@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.15 2009/02/03 22:55:54 bhepple Exp $
+# $Id: process-getopt,v 1.16 2009/03/31 07:02:26 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -96,6 +96,24 @@
 
 # todo:
 # python, c, perl versions of this. ruby? c++? java?
+
+# tested on bash-3.00.15 - probably bash-2.04 would be adequate (as
+# that version introduced ${!prefix*}) but it has not been tested.
+# Certainly would not work on plain old sh.
+
+# try and write this test to be legal in bash-1.x:
+GOOD_ENOUGH=""
+if [ "x$BASH_VERSION" = "x" -o "x$BASH_VERSINFO" = "x" ]; then
+    GOOD_ENOUGH=""
+elif [ "${BASH_VERSINFO[0]}" -gt 2 ]; then
+    GOOD_ENOUGH="1"
+elif [ "${BASH_VERSINFO[0]}" -eq 2 -a "${BASH_VERSINFO[1]}" -ge 4 ]; then
+        GOOD_ENOUGH="1"
+fi
+if [ "x$GOOD_ENOUGH" = "x" ]; then
+    echo "This version of the shell does not support process-getopt" >&2
+    exit 1
+fi
 
 process_getopt_usage() {
     echo "Usage: $PROG [ OPTIONS ]"
@@ -402,7 +420,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.15 2009/02/03 22:55:54 bhepple Exp $
+.\" $Id: process-getopt,v 1.16 2009/03/31 07:02:26 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
