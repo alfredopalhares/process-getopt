@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.17 2009/04/03 15:58:50 bhepple Exp $
+# $Id: process-getopt,v 1.18 2009/04/03 17:16:29 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -97,28 +97,28 @@
 # todo:
 # python, c, perl versions of this. ruby? c++? java?
 
-# tested on bash-3.00.15 - probably bash-2.04 would be adequate (as
-# that version introduced ${!prefix*}) but it has not been tested.
+# tested on bash-2.04
 # Certainly would not work on plain old sh.
 
-# try and write this test to be legal in bash-1.x:
+# try and write this test to be legal in sh/bash-1.x:
 GOOD_ENOUGH=""
 if [ "x$BASH_VERSION" = "x" -o "x$BASH_VERSINFO" = "x" ]; then
-    GOOD_ENOUGH=""
+    :
 elif [ "${BASH_VERSINFO[0]}" -gt 2 ]; then
     GOOD_ENOUGH="1"
 elif [ "${BASH_VERSINFO[0]}" -eq 2 -a "${BASH_VERSINFO[1]}" -ge 4 ]; then
-        GOOD_ENOUGH="1"
+    GOOD_ENOUGH="1"
 fi
 if [ "x$GOOD_ENOUGH" = "x" ]; then
     echo "This version of the shell does not support process-getopt" >&2
+    echo "bash-2.04 or later is required" >&2
     exit 1
 fi
 
 process_getopt_usage() {
     echo "Usage: $PROG [ OPTIONS ]"
     echo
-    echo "Normally sourced by other scripts rather than running by itself."
+    echo "Normally sourced by other scripts rather than run by itself."
     echo "See the man page for details of functions that $PROG provides."
     echo "When called without options, does nothing. Otherwise:"
     echo
@@ -143,7 +143,7 @@ process_getopt_version() {
     echo "$__PG_VERSION"
 }
 
-add_opt () {
+add_opt() {
     # parameters: use "" as the placeholder for a missing arg
     local NAME="$1" ; shift # name of the option - essential
     local DESC="$1" ; shift # essential except for 'silent/secret' options
@@ -157,24 +157,25 @@ add_opt () {
     local OPT
 
     [ "$NAME" ] || { 
-        echo "$PROG: add_opt requires a name" >&2
+        echo "$PROG: process-getopt: add_opt requires a name" >&2
         exit 1
     }
-    [[ "$NAME" =~ $ALLOWED_CHARS ]] || {
-        echo "$PROG: apt_opt: NAME (\"$NAME\") must obey the regexp $ALLOWED_CHARS" >&2
+    # [[ "$NAME" =~ $ALLOWED_CHARS ]] || { ... this needs bash-3
+    [ `echo $NAME |tr -d '[:alnum:]' |tr -d '[_]'` ] && {
+        echo "$PROG: process-getopt: apt_opt: NAME (\"$NAME\") must obey the regexp $ALLOWED_CHARS" >&2
         exit 1
     }
 
     # check at least a short or a long option is given:
     [ "$SOPT$LOPT" ] || {
-        echo "$PROG: add_opt: option $NAME needs a short or a long option" >&2
+        echo "$PROG: process-getopt: add_opt: option $NAME needs a short or a long option" >&2
         exit 1
     }
 
     # check that a helper function is available:
     ${NAME}$FUNC_SUFFIX 2>/dev/null; local STAT=$?
     if [ $STAT -eq 127 ]; then
-        echo "$PROG: option $NAME has no helper function $NAME$FUNC_SUFFIX" >&2
+        echo "$PROG: process-getopt: option $NAME has no helper function $NAME$FUNC_SUFFIX" >&2
         exit 1
     fi
 
@@ -187,7 +188,7 @@ add_opt () {
     # check it's not already in use
     for OPT in $__PG_OPTION_LIST; do 
         if [ "$NAME" = "$OPT" ]; then
-            echo "$PROG: option name \"$NAME\" is already in use" >&2
+            echo "$PROG: process-getopt: option name \"$NAME\" is already in use" >&2
             exit 1
         fi
         # check it's not already in use - cover the case of with and
@@ -196,7 +197,7 @@ add_opt () {
             for SUFFIX in "" "A"; do
                 L="SOPT${SUFFIX}_$OPT"
                 if [ "$SOPT" = "${!L}" ]; then
-                    echo "$PROG: short option \"$SOPT\" is already in use by \
+                    echo "$PROG: process-getopt: short option \"$SOPT\" is already in use by \
 $OPT" >&2
                     exit 1
                 fi
@@ -206,7 +207,7 @@ $OPT" >&2
             for SUFFIX in "" "A"; do
                 L="LOPT${SUFFIX}_$OPT"
                 if [ "$LOPT" = "${!L}" ]; then
-                    echo "$PROG: long option \"$LOPT\" is already in use by $OPT" >&2
+                    echo "$PROG: process-getopt: long option \"$LOPT\" is already in use by $OPT" >&2
                     exit 1
                 fi
             done
@@ -215,8 +216,7 @@ $OPT" >&2
 
     if [ "$SOPT" ]; then
         [ ${#SOPT} -ne 1 ] && {
-            echo "$PROG: short option \"$SOPT\" for option $NAME is not a \
-single character" >&2
+            echo "$PROG: process-getopt: short option \"$SOPT\" for option $NAME is not a single character" >&2
             exit 1
         }
         export SOPT${A}_$NAME="$SOPT"
@@ -420,7 +420,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.17 2009/04/03 15:58:50 bhepple Exp $
+.\" $Id: process-getopt,v 1.18 2009/04/03 17:16:29 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -674,7 +674,7 @@ process_opts() {
         *) 
             local NAME=$(get_opt_name "$1")
             if [ -z "$NAME" ]; then
-                echo "$PROG: process_opts: no function for option \"$1\"" >&2
+                echo "$PROG: process-getopt: process_opts: no function for option \"$1\"" >&2
                 exit 1
             fi
             $NAME$FUNC_SUFFIX "$1" "$2"; local STAT=$?
@@ -723,7 +723,7 @@ __PG_STANDALONE=""
 [ "$PROG" ] || { 
     PROG=$(basename $0)
     if [ "$PROG" != "process-getopt" ]; then
-        echo "$PROG: \$PROG not defined, bailing" >&2; 
+        echo "$PROG: process-getopt: \$PROG not defined, bailing" >&2; 
         exit 1; 
     fi
     # Otherwise, we're running as a standalone - perhaps to get the
@@ -734,7 +734,7 @@ __PG_STANDALONE=""
 }
 
 [ "$VERSION" ] || { 
-    echo "$PROG: \$VERSION not defined, bailing" >&2 
+    echo "$PROG: process-getopt: \$VERSION not defined, bailing" >&2 
     exit 1
 }
 
