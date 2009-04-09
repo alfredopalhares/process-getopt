@@ -1,5 +1,6 @@
 2009-04-10    <bhepple@freeshell.org>
 	* Add del_opt
+	* Use CVS Revision keyword as version number
 2009-04-03    <bhepple@freeshell.org>
 	* Support bash-2.04
 	* Call clean_process_getopt more effectively
