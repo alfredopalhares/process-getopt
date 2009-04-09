@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.21 2009/04/09 12:08:45 bhepple Exp $
+# $Id: process-getopt,v 1.22 2009/04/09 12:15:23 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -439,7 +439,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.21 2009/04/09 12:08:45 bhepple Exp $
+.\" $Id: process-getopt,v 1.22 2009/04/09 12:15:23 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -475,7 +475,7 @@ Written by Foo Bar <foobar@foobar.org>
 .P
 .RB http://foobar.foobar.org/foobar
 .SH "COPYRIGHT"
-Copyright (c) 2008 Robert Hepple
+Copyright (c) 2008-2009 Robert Hepple
 .br
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
