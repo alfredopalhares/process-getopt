@@ -1,3 +1,16 @@
+2009-04-10    <bhepple@freeshell.org>
+	* Add del_opt
+2009-04-03    <bhepple@freeshell.org>
+	* Support bash-2.04
+	* Call clean_process_getopt more effectively
+2009-03-31    <bhepple@freeshell.org>
+	* Add a test for a decent version of bash
+2009-02-03    <bhepple@freeshell.org>
+	* Support scripts with "sh -e" flag
+2008-12-09    <bhepple@freeshell.org>
+	* Add quiet option
+	* Roll the various options checks into one loop for a bit more
+	efficiency in add_opt
 2008-11-07    <bhepple@freeshell.org>
 	* Fix option name uniqueness test
 	* Add default-usage function
@@ -5,7 +18,7 @@
 	* Add print_* functions
 	* Change all scripts to package process-getopt functions in a
 	single function
-	* Add command-processor
+	* Add clean_process_getopt and command-processor
 	* Add testecho
 2008-10-24     <bhepple@freeshell.org>
 	* Add ability for process-getopt to be called as a script (mainly
