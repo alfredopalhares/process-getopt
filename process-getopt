@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.19 2009/04/09 05:57:17 bhepple Exp $
+# $Id: process-getopt,v 1.20 2009/04/09 06:28:44 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -433,7 +433,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.19 2009/04/09 05:57:17 bhepple Exp $
+.\" $Id: process-getopt,v 1.20 2009/04/09 06:28:44 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -729,7 +729,7 @@ get_opt_name() {
     return 1
 }
 
-__PG_VERSION="1.4"
+__PG_VERSION="$Revision: 1.20 $"
 __PG_STANDALONE=""
 
 # First some safety checks:
