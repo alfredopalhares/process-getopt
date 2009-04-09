@@ -45,3 +45,6 @@ echo "To upload (already in ~/public_html/process-getopt):"
 echo "scp process-getopt-${VERSION}.tgz bhepple.freeshell.org:html/process-getopt"
 echo "rsync process-getopt-${VERSION}.tgz frs.sourceforge.net:uploads/"
 echo "was ... scp to shell.sourceforge.net:/home/groups/p/pr/process-getopt/htdocs/"
+
+man `pwd`/process-getopt.1 |col -b >process-getopt.txt
+man -t `pwd`/process-getopt.1 | ps2pdf - - > process-getopt.pdf
