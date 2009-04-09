@@ -16,7 +16,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 # http://bhepple.freeshell.org
-# $Id: process-getopt,v 1.18 2009/04/03 17:16:29 bhepple Exp $
+# $Id: process-getopt,v 1.19 2009/04/09 05:57:17 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -271,6 +271,19 @@ get_opt_desc() {
     echo -n "${!L}"
 }
 
+del_opt() {
+    local NAME="$1"
+    for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_; do
+        unset $PRE$NAME
+    done
+    local OPT_LIST
+    OPT_LIST=""
+    for OPT in $__PG_OPTION_LIST; do
+        [ $OPT = $NAME ] || OPT_LIST="$OPT_LIST $OPT"
+    done
+    __PG_OPTION_LIST="$OPT_LIST"
+}
+
 # prints only short options that take no parameter
 print_short_flags() {
     local NAME
@@ -420,7 +433,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.18 2009/04/03 17:16:29 bhepple Exp $
+.\" $Id: process-getopt,v 1.19 2009/04/09 05:57:17 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC

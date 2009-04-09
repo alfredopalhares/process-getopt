@@ -18,7 +18,7 @@
 
 # http://bhepple.freeshell.org
 # http://process-getopt.sourceforge.net
-# $Id: example-script,v 1.6 2009/03/06 07:02:23 bhepple Exp $
+# $Id: example-script,v 1.7 2009/04/09 05:57:16 bhepple Exp $
 
 # A tutorial for process-getopt 
 
@@ -74,7 +74,8 @@ check_and_process_opts() {
     # add_opt E-ffect "foobar" e # NAME must be [a-zA-Z0-9_]
 
     add_std_opts # define the standard options --help etc
-
+    del_opt QUIET
+    del_opt END_OPTIONS
     TEMP=$(call_getopt "$@") || exit 1
     eval set -- "$TEMP"
     process_opts "$@"
