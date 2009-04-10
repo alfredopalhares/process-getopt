@@ -20,10 +20,13 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: boilerplate,v 1.10 2009/04/09 12:08:45 bhepple Exp $
+# $Id: boilerplate,v 1.11 2009/04/10 09:46:18 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 # where it says  # CUSTOMISE
+
+# error on first failed command or unreferencing a undefined variable:
+set -eu
 
 check_and_process_opts() {
     local NO_OPTS TEMP PG
@@ -49,19 +52,22 @@ check_and_process_opts() {
     source $PG
 
     # define our options: # CUSTOMISE
-    SLOT_func()   { [ "$1" ] && SLOT="yes"; }
+    SLOT_func()   { [ "${1:-""}" ] && SLOT="yes"; }
     add_opt SLOT "boolean option" s "" slot 
-    TOKEN_func()  { [ "$1" ] && TOKEN="$2"; }
+    TOKEN_func()  { [ "${1:-""}" ] && TOKEN="$2"; }
     add_opt TOKEN "option that takes a value" t n token number
 
     # define the standard options --help etc:
     add_std_opts 
 
-    # process the command line:
+    # delete any standard options you don't want:
+    del_opt QUIET
+    del_opt END_OPTIONS
+
+    # process the command line, callback get called here:
     TEMP=$(call_getopt "$@") || exit 1
     eval set -- "$TEMP"
-    process_opts "$@"
-    shift "$?"
+    process_opts "$@" || shift "$?"
 
     # return the new command line (stripped of options):
     NEW_ARGS=( "$@" )
@@ -74,7 +80,7 @@ check_and_process_opts() {
 
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION="$Revision: 1.10 $" # CUSTOMISE
+VERSION='$Revision: 1.11 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="<files>" # CUSTOMISE
 SHORT_DESC="Short description. " # CUSTOMISE
@@ -84,7 +90,8 @@ TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
 
 NEW_ARGS=( )
-check_and_process_opts "$@" && set -- "${NEW_ARGS[@]}"
+check_and_process_opts "$@" 
+[ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]}"
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.

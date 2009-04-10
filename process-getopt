@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.22 2009/04/09 12:15:23 bhepple Exp $
+# $Id: process-getopt,v 1.23 2009/04/10 09:46:18 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -142,7 +142,7 @@ process_getopt_usage() {
 # again to process the command options. 
 clean_process_getopt() {
     unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
-    unset __PG_OPTION_LIST
+    __PG_OPTION_LIST=""
 }
 
 process_getopt_version() {
@@ -151,12 +151,13 @@ process_getopt_version() {
 
 add_opt() {
     # parameters: use "" as the placeholder for a missing arg
-    local NAME="$1" ; shift # name of the option - essential
-    local DESC="$1" ; shift # essential except for 'silent/secret' options
-    local SOPT="$1" ; shift # short option letter - optional
-    local SARG="$1" ; shift # argument label for the short option - optional
-    local LOPT="$1" ; shift # long option - optional
-    local LARG="$1" ; shift # argument label for the long option - optional
+    local NAME DESC SOPT SARG LOPT LARG
+    NAME="$1" # name of the option - essential
+    DESC="$2" # essential except for 'silent/secret' options
+    SOPT="${3:-""}" # short option letter - optional
+    SARG="${4:-""}" # argument label for the short option - optional
+    LOPT="${5:-""}" # long option - optional
+    LARG="${6:-""}" # argument label for the long option - optional
     local A
     local L
     local ALLOWED_CHARS='[a-zA-Z0-9_][a-zA-Z0-9_]*'
@@ -178,8 +179,11 @@ add_opt() {
         exit 1
     }
 
-    # check that a helper function is available:
-    ${NAME}$FUNC_SUFFIX 2>/dev/null; local STAT=$?
+    # check that a helper function is available by calling it without an arg
+    # it is supposed to do nothing - but if it is undefined then we get
+    # error 127:
+    local STAT=0
+    ${NAME}$FUNC_SUFFIX 2>/dev/null || STAT=$?
     if [ $STAT -eq 127 ]; then
         echo "$PROG: process-getopt: option $NAME has no helper function $NAME$FUNC_SUFFIX" >&2
         exit 1
@@ -202,7 +206,7 @@ add_opt() {
         if [ "$SOPT" ]; then
             for SUFFIX in "" "A"; do
                 L="SOPT${SUFFIX}_$OPT"
-                if [ "$SOPT" = "${!L}" ]; then
+                if [ "$SOPT" = "${!L:-""}" ]; then
                     echo "$PROG: process-getopt: short option \"$SOPT\" is already in use by \
 $OPT" >&2
                     exit 1
@@ -212,7 +216,7 @@ $OPT" >&2
         if [ "$LOPT" ]; then
             for SUFFIX in "" "A"; do
                 L="LOPT${SUFFIX}_$OPT"
-                if [ "$LOPT" = "${!L}" ]; then
+                if [ "$LOPT" = "${!L:-""}" ]; then
                     echo "$PROG: process-getopt: long option \"$LOPT\" is already in use by $OPT" >&2
                     exit 1
                 fi
@@ -244,50 +248,52 @@ get_opt_letter() {
     local NAME="$1"
     local L="SOPT_$NAME" 
     
-    [ "${!L}" ] || L="SOPTA_$NAME"
-    echo -n  "${!L}"
+    [ "${!L:-""}" ] || L="SOPTA_$NAME"
+    echo -n  "${!L:-""}"
 }
 
 get_opt_string() {
     local NAME="$1"
     local L="LOPT_$NAME" 
     
-    [ "${!L}" ] || L="LOPTA_$NAME"
-    echo -n  "${!L}"
+    [ "${!L:-""}" ] || L="LOPTA_$NAME"
+    echo -n  "${!L:-""}"
 }
 
 get_opt_sarg() {
     local NAME="$1"
     local L="ARG_SOPTA_$NAME" 
     
-    echo -n "${!L}"
+    echo -n "${!L:-""}"
 }
 
 get_opt_larg() {
     local NAME="$1"
     local L="ARG_LOPTA_$NAME" 
     
-    echo -n "${!L}"
+    echo -n "${!L:-""}"
 }
 
 get_opt_desc() {
     local NAME="$1"
     local L="DESC_OPT_$NAME" 
     
-    echo -n "${!L}"
+    echo -n "${!L:-""}"
 }
 
 del_opt() {
-    local NAME="$1"
-    for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_; do
-        unset $PRE$NAME
+    local NAME
+    for NAME in "$@"; do
+        for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_; do
+            unset $PRE$NAME
+        done
+        local OPT_LIST
+        OPT_LIST=""
+        for OPT in $__PG_OPTION_LIST; do
+            [ $OPT = $NAME ] || OPT_LIST="$OPT_LIST $OPT"
+        done
+        __PG_OPTION_LIST="$OPT_LIST"
     done
-    local OPT_LIST
-    OPT_LIST=""
-    for OPT in $__PG_OPTION_LIST; do
-        [ $OPT = $NAME ] || OPT_LIST="$OPT_LIST $OPT"
-    done
-    __PG_OPTION_LIST="$OPT_LIST"
 }
 
 # prints only short options that take no parameter
@@ -361,7 +367,7 @@ print_long_args() {
 
 # prints short and long options that take a parameter
 print_all_args() {
-    local MAN=$1
+    local MAN=${1:-""}
 
     local NAME
     for NAME in $__PG_OPTION_LIST; do 
@@ -439,7 +445,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.22 2009/04/09 12:15:23 bhepple Exp $
+.\" $Id: process-getopt,v 1.23 2009/04/10 09:46:18 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -447,11 +453,11 @@ $PROG \- $SHORT_DESC
 .hy 0
 .na
 .B $PROG$FLAGS$LFLAGS$ARGS
-$ARGUMENTS
+${ARGUMENTS:-""}
 .ad b
 .hy 0
 .SH DESCRIPTION
-$USAGE
+${USAGE:-""}
 .P
 Foobar foobar foobar
 .SH OPTIONS
@@ -571,7 +577,7 @@ print_opt() {
     if [ "$__PG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && LINE="$LINE, "
         if [ "$LOPT" ]; then
-            [ "$SOPT" ] && LONG_START=$LONG_COL_OPT || LONG_START=$__PG_SHORT_OPT_COL
+            [ "$SOPT" ] && LONG_START=${LONG_COL_OPT:-""} || LONG_START=$__PG_SHORT_OPT_COL
             for (( N=0 ; ${#LINE} < LONG_START ; N++ )); do 
                 LINE="$LINE "
             done
@@ -608,7 +614,7 @@ print_opt() {
 
 # honour GNU ARGP_HELP_FMT parameter
 load_help_fmt() {
-    [ "$ARGP_HELP_FMT" ] || return 0
+    [ "${ARGP_HELP_FMT:-""}" ] || return 0
     OFS="$IFS"
     IFS=','
     set -- $ARGP_HELP_FMT
@@ -646,9 +652,9 @@ default_usage() {
     local ARGS=$(print_all_args)
     local FMT="fmt -w $__PG_COLUMNS -s"
     type fmt &> /dev/null || FMT=cat
-    echo "Usage: $PROG $FLAGS$LFLAGS$ARGS $ARGUMENTS" |$FMT
+    echo "Usage: $PROG $FLAGS$LFLAGS$ARGS ${ARGUMENTS:-""}" |$FMT
     echo
-    echo "$SHORT_DESC$USAGE" |$FMT
+    echo "${SHORT_DESC:-""}${USAGE:-""}" |$FMT
     echo
     echo "Options:"
     print_all_opts
@@ -657,7 +663,7 @@ default_usage() {
 process_opts() {
     local SHIFT_NUM=0
     while true; do
-        case $1 in
+        case "${1:-""}" in
         -$HELP_option | --$HELP_loption) 
             usage 2>/dev/null || default_usage
             exit 0
@@ -704,14 +710,13 @@ process_opts() {
             # now let's adjust for options with args:
             local SA="ARG_SOPTA_$NAME"
             local LA="ARG_LOPTA_$NAME"
-            if [ "${!SA}${!LA}" ]; then
+            if [ "${!SA:-""}${!LA:-""}" ]; then
                 shift
                 ((SHIFT_NUM++))
             fi
             ;;
         esac
     done
-    clean_process_getopt
     return $SHIFT_NUM
 }
 
@@ -724,10 +729,10 @@ get_opt_name() {
         local LA=LOPTA_$NAME
         local S=SOPT_$NAME
         local SA=SOPTA_$NAME
-        if  [ "--${!L}" = "$OPT" ] || \
-            [ "--${!LA}" = "$OPT" ] || \
-            [ "-${!S}" = "$OPT" ] || \
-            [ "-${!SA}" = "$OPT" ]; then
+        if  [ "--${!L:-""}" = "$OPT" ] || \
+            [ "--${!LA:-""}" = "$OPT" ] || \
+            [ "-${!S:-""}" = "$OPT" ] || \
+            [ "-${!SA:-""}" = "$OPT" ]; then
             echo "${NAME}"
             return 0
         fi
@@ -735,7 +740,7 @@ get_opt_name() {
     return 1
 }
 
-__PG_VERSION="1.4"
+__PG_VERSION="1.5"
 __PG_STANDALONE=""
 
 # First some safety checks:
@@ -758,7 +763,7 @@ __PG_STANDALONE=""
 }
 
 __PG_COLUMNS=`tput cols 2>/dev/null` || __PG_COLUMNS=80
-(( _PG_COLUMNS--))
+((__PG_COLUMNS--))
 
 __PG_OPTION_LIST=""
 __PG_LONG_GETOPT=""
@@ -805,3 +810,6 @@ load_help_fmt
     process_opts "$@"
     shift "$?"
 }
+
+# just to make sure we don't return with non-zero $?:
+:

@@ -20,25 +20,38 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: tiny,v 1.1 2009/04/09 12:08:45 bhepple Exp $
+# $Id: tiny,v 1.2 2009/04/10 09:46:18 bhepple Exp $
+
+# error on first failed command or unreferencing a undefined variable:
+set -eu
 
 PROG=$(basename $0)
-VERSION="$Revision: 1.1 $"
+VERSION='$Revision: 1.2 $'
 USAGE="A tiny example using process-getopt(1)"
 
 # call process-getopt functions to define some options:
 source ./process-getopt
-SLOT_func()   { [ "$1" ] && SLOT="yes"; }      # callback for SLOT option
+
+SLOT=""
+SLOT_func()   { [ "${1:-""}" ] && SLOT="yes"; }      # callback for SLOT option
 add_opt SLOT "boolean option" s "" slot
-TOKEN_func()  { [ "$1" ] && TOKEN="$2"; }      # callback for TOKEN option
+
+TOKEN=""
+TOKEN_func()  { [ "${1:-""}" ] && TOKEN="$2"; }      # callback for TOKEN option
 add_opt TOKEN "this option takes a value" t n token number
+
 add_std_opts     # define the standard options --help etc:
 
-# The next 4 lines call the callbacks and remove the options from the command line # so all we need to deal with in the rest of our script is the arguments in $@
+# The next 4 lines call the callbacks and remove the options from the
+# command line so all we need to deal with in the rest of our script
+# is the arguments in $@
+
+# Re-order options and call option callbacks:
 TEMP=$(call_getopt "$@") || exit 1
 eval set -- "$TEMP"
-process_opts "$@" 
-shift "$?"    # remove the options from the command line
+
+# remove the options from the command line
+process_opts "$@" || shift "$?"
 
 echo "SLOT=$SLOT"
 echo "TOKEN=$TOKEN"

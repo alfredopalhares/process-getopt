@@ -20,9 +20,12 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: example-script,v 1.8 2009/04/09 12:08:45 bhepple Exp $
+# $Id: example-script,v 1.9 2009/04/10 09:46:18 bhepple Exp $
 
 # A tutorial example for process-getopt 
+
+# error on first failed command or unreferencing a undefined variable:
+set -eu
 
 check_and_process_opts() {
     local NO_OPTS TEMP PG
@@ -46,23 +49,23 @@ check_and_process_opts() {
     [ "$PG" ] || exit 1
     source $PG
 
-
     # These are the option helper functions that are called in response to
     # an option being found on the command line. They are called by
-    # call_process with parameters set:
+    # call_getopt with parameters set:
     # $1 = the option eg -c or --cdrom
     # $2 = any argument to the option, if present
     #
     # These helpers generally just set flags and store values
     #
-    # Note that they are also called by add_opt to check for their
-    # existence, so make sure the are defined _before_ calling add_opt. In
-    # this case, they are called with no parameters:
-    CD_func()     { [ "$1" ] && echo "$PROG: got a CD option"; }
-    SLOT_func()   { [ "$1" ] && echo "$PROG: got a SLOT option = \"$2\""; }
-    TOKEN_func()  { [ "$1" ] && echo "$PROG: got a TOKEN option = \"$2\""; }
-    LONG_func()   { [ "$1" ] && echo "$PROG: got a LONG option"; }
-    SILENT_func() { [ "$1" ] && echo "$PROG: got a SILENT option"; }
+    # Note that they are also called by add_opt (with no parameters)
+    # to check for their existence, so make sure the are defined
+    # _before_ calling add_opt:
+
+    CD_func()     { [ "${1:-""}" ] && echo "$PROG: got a CD option"; }
+    SLOT_func()   { [ "${1:-""}" ] && echo "$PROG: got a SLOT option = \"$2\""; }
+    TOKEN_func()  { [ "${1:-""}" ] && echo "$PROG: got a TOKEN option = \"$2\""; }
+    LONG_func()   { [ "${1:-""}" ] && echo "$PROG: got a LONG option"; }
+    SILENT_func() { [ "${1:-""}" ] && echo "$PROG: got a SILENT option"; }
 
     # Now we define the options:
     add_opt CD "foobar" c "" cdrom
@@ -76,12 +79,14 @@ check_and_process_opts() {
     # add_opt E-ffect "foobar" e # NAME must be [a-zA-Z0-9_]
 
     add_std_opts # define the standard options --help etc
-    del_opt QUIET
-    del_opt END_OPTIONS
+
+    # delete any options we don't need:
+    del_opt QUIET END_OPTIONS
+
+    # process the command line, callback get called here:
     TEMP=$(call_getopt "$@") || exit 1
     eval set -- "$TEMP"
-    process_opts "$@"
-    shift "$?"
+    process_opts "$@" || shift $?
     NEW_ARGS=( "$@" )
     return 0
 }
@@ -103,7 +108,8 @@ TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
 
 NEW_ARGS=( )
-check_and_process_opts "$@" && set -- "${NEW_ARGS[@]}"
+check_and_process_opts "$@"
+[ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]}"
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.
