@@ -1,4 +1,4 @@
-\" $Id: process-getopt.1,v 1.17 2009/04/09 12:23:04 bhepple Exp $
+\" $Id: process-getopt.1,v 1.18 2009/04/10 09:49:26 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt
@@ -15,7 +15,7 @@ and (more usefully) when sourced:
 .B add_opt
 \fINAME\fP [ \fIdesc\fP ] [ \fIshort_opt\fP [ \fIarg_name\fP ]] [ \fIlong_opt\fP [ \fIarg_name\fP ]]
 .br
-\fBdel_opt\fP \fIname\fP
+\fBdel_opt\fP \fIname\fP [ \fIname\fP ... ]
 .br
 .B add_std_opts
 .br
@@ -187,7 +187,7 @@ with 2 arguments, namely the option string that triggered the function
 and the value associated with the option on the command line, if any.
 .TP
 .B \fBdel_opt\fR
-Deletes an option (by name). This can be used, for example, to back
+Deletes option(s) (by name). This can be used, for example, to back
 out one of the built-in options eg QUIET, VERBOSE, VERSION,
 END_OPTIONS. It's probably meaningless to remove the HELP option!!
 .TP
