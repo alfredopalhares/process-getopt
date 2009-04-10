@@ -20,7 +20,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-# $Id: command-processor,v 1.5 2009/04/10 10:17:28 bhepple Exp $
+# $Id: command-processor,v 1.6 2009/04/10 22:11:22 bhepple Exp $
 
 # A test script for process-getopt - just echos options and args
 
@@ -77,7 +77,7 @@ process_add_options() {
 
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.5 $'
+VERSION='$Revision: 1.6 $'
 VERBOSE=""
 ARGUMENTS="add | multiply | frob | bris [ COMMAND_OPTIONS] "
 USAGE="echos options and args to stdout"
@@ -91,8 +91,13 @@ COUNTED=0
 
 export STOP_ON_FIRST_NON_OPT="yes"
 NEW_ARGS=( )
-check_and_process_opts "$@" 
-[ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]:-""}" || set --
+check_and_process_opts "$@" && {
+    if [ ${#NEW_ARGS[@]} -gt 0 ]; then
+        set -- "${NEW_ARGS[@]}"
+    else
+        set --
+    fi
+}
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.
@@ -124,12 +129,16 @@ case "$COMMAND" in
         PROG="$PROG add"
         USAGE="do the add thing"
         ADDSLOT=""
-        process_add_options "$@"
-        [ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]}" || set --
+        process_add_options "$@" && {
+            if [ ${#NEW_ARGS[@]} -gt 0 ]; then
+                set -- "${NEW_ARGS[@]}"
+            else
+                set --
+            fi
+        }
         echo "After 'add' option processing we have:"
         for i in "$@"; do echo -n "\"$i\" "; done
         echo
-        echo "ADDSLOT=$ADDSLOT"
         echo "ADDSLOT option (-$(get_opt_letter ADDSLOT), --$(get_opt_string ADDSLOT))"
         ;;
     *)

@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: boilerplate,v 1.12 2009/04/10 10:17:28 bhepple Exp $
+# $Id: boilerplate,v 1.13 2009/04/10 22:11:22 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 # where it says  # CUSTOMISE
@@ -80,7 +80,7 @@ check_and_process_opts() {
 
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.12 $' # CUSTOMISE
+VERSION='$Revision: 1.13 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="<files>" # CUSTOMISE
 SHORT_DESC="Short description. " # CUSTOMISE
@@ -90,8 +90,13 @@ TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
 
 NEW_ARGS=( )
-check_and_process_opts "$@" 
-[ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]}" || set --
+check_and_process_opts "$@" && {
+    if [ ${#NEW_ARGS[@]} -gt 0 ]; then
+        set -- "${NEW_ARGS[@]}"
+    else
+        set --
+    fi
+}
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.

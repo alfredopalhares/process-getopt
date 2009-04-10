@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: example-script,v 1.10 2009/04/10 10:17:28 bhepple Exp $
+# $Id: example-script,v 1.11 2009/04/10 22:11:22 bhepple Exp $
 
 # A tutorial example for process-getopt 
 
@@ -108,8 +108,13 @@ TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
 
 NEW_ARGS=( )
-check_and_process_opts "$@"
-[ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]}" || set --
+check_and_process_opts "$@" && {
+    if [ ${#NEW_ARGS[@]} -gt 0 ]; then
+        set -- "${NEW_ARGS[@]}"
+    else
+        set --
+    fi
+}
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.
