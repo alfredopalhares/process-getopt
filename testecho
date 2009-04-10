@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: testecho,v 1.4 2009/04/09 12:08:45 bhepple Exp $
+# $Id: testecho,v 1.5 2009/04/10 10:17:28 bhepple Exp $
 
 # A test script for process-getopt - just echos options and args
 
@@ -85,7 +85,8 @@ TOKEN=""
 SLOT=""
 
 NEW_ARGS=( )
-check_and_process_opts "$@" && set -- "${NEW_ARGS[@]}"
+check_and_process_opts "$@"
+[ ${#NEW_ARGS[@]} -gt 0 ] && set -- "${NEW_ARGS[@]}" || set --
 
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.

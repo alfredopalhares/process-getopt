@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.23 2009/04/10 09:46:18 bhepple Exp $
+# $Id: process-getopt,v 1.24 2009/04/10 10:17:28 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -285,7 +285,8 @@ del_opt() {
     local NAME
     for NAME in "$@"; do
         for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_; do
-            unset $PRE$NAME
+            local N=$PRE$NAME
+            [ "${!N:-""}" ] && unset $PRE$NAME
         done
         local OPT_LIST
         OPT_LIST=""
@@ -445,7 +446,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.23 2009/04/10 09:46:18 bhepple Exp $
+.\" $Id: process-getopt,v 1.24 2009/04/10 10:17:28 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
