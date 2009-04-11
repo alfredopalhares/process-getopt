@@ -1,0 +1,19 @@
+test_body() {
+    source ../process-getopt
+    add_opt "ASDA" a a
+    return $?
+}
+
+test_setup() {
+    TEST_TITLE="add_opt without a callback"
+    TEST_ARGS=""
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=1
+    cat > $TEST_EXP_STDOUT <<"EOF"
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+test_body: process-getopt: option ASDA has no helper function ASDA_func
+EOF
+}

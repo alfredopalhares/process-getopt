@@ -1,0 +1,23 @@
+test_body() {
+    source ../process-getopt
+    ASDA_func() { [ "${1:-""}" ] && ASDA="yes"; }
+    add_opt "ASDA" "asda description" a arg asda argl
+    add_std_opts     # define the standard options --help etc:
+    TEMP=$(call_getopt "$@") || exit 1
+    process_opts "$@" || shift $?
+    return $?
+}
+
+test_setup() {
+    TEST_TITLE="call_getopt with printing version (long options)"
+    TEST_ARGS="--version"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+test_body: version 1
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}

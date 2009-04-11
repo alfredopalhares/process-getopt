@@ -1,0 +1,16 @@
+test_body() {
+    set -eux
+    source ../process-getopt
+    return $?
+}
+
+test_setup() {
+    TEST_TITLE="Source process-getopt with -eux flags"
+    TEST_ARGS=""
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=yes
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+EOF
+}

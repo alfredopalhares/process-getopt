@@ -1,0 +1,20 @@
+test_body() {
+    source ../process-getopt
+    ASDA_func() { [ "${1:-""}" ] && ASDA="yes"; }
+    add_opt "ASDA" a
+    return $?
+}
+
+test_setup() {
+    TEST_TITLE="add_opt without any options"
+    TEST_ARGS=""
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=1
+    cat > $TEST_EXP_STDOUT <<"EOF"
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+test_body: process-getopt: add_opt: option ASDA needs a short or a long option
+EOF
+}

@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.25 2009/04/10 22:14:42 bhepple Exp $
+# $Id: process-getopt,v 1.26 2009/04/11 04:05:47 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -446,7 +446,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.25 2009/04/10 22:14:42 bhepple Exp $
+.\" $Id: process-getopt,v 1.26 2009/04/11 04:05:47 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -741,7 +741,7 @@ get_opt_name() {
     return 1
 }
 
-__PG_VERSION="1.6"
+__PG_VERSION="1.7"
 __PG_STANDALONE=""
 
 # First some safety checks:
