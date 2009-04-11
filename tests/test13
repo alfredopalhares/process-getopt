@@ -1,0 +1,40 @@
+test_body() {
+    source ../process-getopt
+    BOOL=""
+    BOOL_func() { [ "${1:-""}" ] && BOOL="yes"; }
+    add_opt "BOOL" "bool description" b "" bool
+
+    ASDA=""
+    ASDA_func() { [ "${1:-""}" ] && ASDA="$2"; }
+    add_opt "ASDA" "asda description" a arg asda argl
+
+    SILENT=""
+    SILENT_func() { [ "${1:-""}" ] && SILENT="$2"; }
+    add_opt "SILENT" "silent description" s arg silent argl
+
+    add_std_opts     # define the standard options --help etc:
+    del_opt QUIET END_OPTIONS
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@" || shift $?
+    echo "BOOL=$BOOL"
+    echo "ASDA=$ASDA"
+    echo "SILENT=$SILENT"
+    for i in $@; do echo -n "\"$i\" "; done
+    echo
+    return 0
+}
+
+test_setup() {
+    TEST_TITLE="value option, value missing"
+    TEST_ARGS="-a"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=1
+    cat > $TEST_EXP_STDOUT <<"EOF"
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+test_body: option requires an argument -- a
+EOF
+}

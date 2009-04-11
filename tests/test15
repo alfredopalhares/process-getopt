@@ -1,0 +1,49 @@
+test_body() {
+    source ../process-getopt
+    BOOL=""
+    BOOL_func() { [ "${1:-""}" ] && BOOL="yes"; }
+    add_opt "BOOL" "bool description" b "" bool
+
+    ASDA=""
+    ASDA_func() { [ "${1:-""}" ] && ASDA="$2"; }
+    add_opt "ASDA" "asda description" a arg asda argl
+
+    SILENT=""
+    SILENT_func() { [ "${1:-""}" ] && SILENT="$2"; }
+    add_opt "SILENT" "silent description" s arg silent argl
+
+    add_std_opts     # define the standard options --help etc:
+    del_opt QUIET END_OPTIONS
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@" || shift $?
+
+    echo "get_opt_letter BOOL:    \"`get_opt_letter BOOL`\""
+    echo "get_opt_string ASDA:    \"`get_opt_string ASDA`\""
+    echo "get_opt_sarg SILENT:    \"`get_opt_sarg SILENT`\""
+    echo "get_opt_larg SILENT:    \"`get_opt_larg SILENT`\""
+    echo "get_opt_desc BOOL:      \"`get_opt_desc BOOL`\""
+    echo "get_opt_name -b:        \"`get_opt_name -b`\""
+    echo "process_getopt_version: \"`process_getopt_version`\""
+    return 0
+}
+
+test_setup() {
+    TEST_TITLE="get_opt_*"
+    TEST_ARGS=""
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+get_opt_letter BOOL:    "b"
+get_opt_string ASDA:    "asda"
+get_opt_sarg SILENT:    "arg"
+get_opt_larg SILENT:    "argl"
+get_opt_desc BOOL:      "bool description"
+get_opt_name -b:        "BOOL"
+process_getopt_version: "1.7"
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}

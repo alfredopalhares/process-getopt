@@ -1,0 +1,20 @@
+test_body() {
+    (cd ..; sh ./tiny $@)
+    return $?
+}
+
+test_setup() {
+    TEST_ARGS="-s -t qweqwe asdasd"
+    TEST_TITLE="tiny $TEST_ARGS"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+SLOT=yes
+TOKEN=qweqwe
+args=asdasd
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}

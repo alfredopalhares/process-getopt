@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: runtests.sh,v 1.1 2009/04/11 04:05:47 bhepple Exp $
+# $Id: runtests.sh,v 1.2 2009/04/11 06:59:49 bhepple Exp $
 
 # error on first failed command or unreferencing a undefined variable:
 set -eu
@@ -68,15 +68,18 @@ check_and_process_opts() {
 ##########################
 #         M A I N        #
 ##########################
-
+BASH_CANDIDATES="bash-2.04 bash-2.05 bash-4.0"
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.1 $' # CUSTOMISE
+VERSION='$Revision: 1.2 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="[tests ...]" # CUSTOMISE
 SHORT_DESC="Run regression tests on process-getopt. " # CUSTOMISE
-USAGE="If no tests are given on the command line, run all test*." # CUSTOMISE
+USAGE="If no tests are given on the command line, run all test*. \
+Tests against $BASH_CANDIDATES if they are available." # CUSTOMISE
 STOP=""
+NUM_PASSED=0
+NUM_FAILED=0
 
 NEW_ARGS=( )
 check_and_process_opts "$@" && {
@@ -90,19 +93,27 @@ check_and_process_opts "$@" && {
 # At this point, all the options have been processed and removed from
 # the arg list. We can now process $@ as arguments to the program.
 
+rm -f *~
 if [ "$@" ]; then
     TESTS="$@"
 else
     TESTS=`ls test*`
 fi
-rm -f *~
+
 mkdir -p data
-BASH_VARIANTS="bash bash-2.04 bash-2.05 bash-4.0"
+
+BASH_VARIANTS="bash "
+for VARIANT in $BASH_CANDIDATES; do
+    if type $VARIANT &>/dev/null; then
+        BASH_VARIANTS="$BASH_VARIANTS $VARIANT"
+    fi
+done
+
 export PROG=test_body
 export VERSION=1
 echo "BASH_VERSION=$BASH_VERSION"
 export VARIANT=""
-for TEST_NAME in $TESTS; do ( # extra level of insulation from the test scripts
+for TEST_NAME in $TESTS; do
     unset TEST_TITLE TEST_ARGS TEST_EXP_VAL
     TEST_EXP_STDOUT=data/exp_stdout.$TEST_NAME
     TEST_EXP_STDERR=data/exp_stderr.$TEST_NAME
@@ -136,9 +147,13 @@ for TEST_NAME in $TESTS; do ( # extra level of insulation from the test scripts
         fi
         if [ "$FAILED" ]; then
             echo "$TEST_NAME failed"
+            NUM_FAILED=$(($NUM_FAILED + 1))
             [ "$STOP" ] && exit 1
         else
             echo "passed"
+            NUM_PASSED=$(($NUM_PASSED + 1))
         fi
     done
-) done
+done
+echo "Passed=$NUM_PASSED, failed=$NUM_FAILED"
+exit $NUM_FAILED

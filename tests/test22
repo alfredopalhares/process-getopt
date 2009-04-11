@@ -1,0 +1,36 @@
+test_body() {
+    (cd ..; sh ./command-processor $@)
+    return $?
+}
+
+test_setup() {
+    TEST_ARGS="-s -t token --long-only=value -c -c add -h"
+    TEST_TITLE="tiny $TEST_ARGS"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+After global option processing we have:
+"add" "-h" 
+SLOT option (-s, --slot)
+TOKEN option (-t "token", --token="token")
+LONGONLY option (--long-only="value")
+COUNTED option (-c = 2)
+COMMAND=add
+Usage: command-processor add [-shVvq-] [--add-slot --help --version --verbose
+--quiet] add | multiply | frob | bris [ COMMAND_OPTIONS]
+
+do the add thing
+
+Options:
+  -s, --add-slot            boolean option
+  -h, --help                print this help and exit
+  -V, --version             print version and exit
+  -v, --verbose             do it verbosely
+  -q, --quiet               do it quietly (negates -v)
+  --                        explicitly ends the options
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}

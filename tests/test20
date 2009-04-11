@@ -1,0 +1,19 @@
+test_body() {
+    ../boilerplate $@
+    return $?
+}
+
+test_setup() {
+    TEST_TITLE="boilerplate -s -t qweqwe -v asdasd"
+    TEST_ARGS="-s -t qweqwe asdasd"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+Remaining args:
+"asdasd"
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}

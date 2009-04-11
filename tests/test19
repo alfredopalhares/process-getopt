@@ -1,0 +1,28 @@
+test_body() {
+    ../boilerplate -h
+    return 0
+}
+
+test_setup() {
+    TEST_TITLE="boilerplate -h"
+    TEST_ARGS="-h"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+Usage: boilerplate [-shVv] [--slot --help --version --verbose] [-t
+<n>,--token=<number>] <files>
+
+Short description. More detailed description.
+
+Options:
+  -s, --slot                boolean option
+  -t n, --token=number      option that takes a value
+  -h, --help                print this help and exit
+  -V, --version             print version and exit
+  -v, --verbose             do it verbosely
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}

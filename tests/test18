@@ -1,0 +1,48 @@
+test_body() {
+    ARGP_HELP_FMT="short-opt-col=3,long-opt-col=8,opt-doc-col=32,rmargin=75"
+    source ../process-getopt
+    BOOL=""
+    BOOL_func() { [ "${1:-""}" ] && BOOL="yes"; }
+    add_opt "BOOL" "bool description" b "" bool
+
+    ASDA=""
+    ASDA_func() { [ "${1:-""}" ] && ASDA="$2"; }
+    add_opt "ASDA" "asda description" a arg asda argl
+
+    SILENT=""
+    SILENT_func() { [ "${1:-""}" ] && SILENT="$2"; }
+    add_opt "SILENT" "silent description" s arg silent argl
+
+    add_std_opts     # define the standard options --help etc:
+    del_opt QUIET END_OPTIONS
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@" || shift $?
+
+    return 0
+}
+
+test_setup() {
+    TEST_TITLE="ARGP_HELP_FMT"
+    TEST_ARGS="-h"
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+Usage: test_body [-bhVv] [--bool --help --version --verbose] [-a
+<arg>,--asda=<argl>] [-s <arg>,--silent=<argl>]
+
+
+
+Options:
+   -b, --bool                  bool description
+   -a arg, --asda=argl         asda description
+   -s arg, --silent=argl       silent description
+   -h, --help                  print this help and exit
+   -V, --version               print version and exit
+   -v, --verbose               do it verbosely
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}
