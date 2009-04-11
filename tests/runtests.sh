@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: runtests.sh,v 1.2 2009/04/11 06:59:49 bhepple Exp $
+# $Id: runtests.sh,v 1.3 2009/04/11 22:29:08 bhepple Exp $
 
 # error on first failed command or unreferencing a undefined variable:
 set -eu
@@ -71,7 +71,7 @@ check_and_process_opts() {
 BASH_CANDIDATES="bash-2.04 bash-2.05 bash-4.0"
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.2 $' # CUSTOMISE
+VERSION='$Revision: 1.3 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="[tests ...]" # CUSTOMISE
 SHORT_DESC="Run regression tests on process-getopt. " # CUSTOMISE
@@ -114,7 +114,8 @@ export VERSION=1
 echo "BASH_VERSION=$BASH_VERSION"
 export VARIANT=""
 for TEST_NAME in $TESTS; do
-    unset TEST_TITLE TEST_ARGS TEST_EXP_VAL
+    unset TEST_TITLE TEST_ARGS TEST_IGNORE_STDOUT TEST_IGNORE_STDERR 
+    unset TEST_IGNORE_VALUE TEST_EXP_VAL
     TEST_EXP_STDOUT=data/exp_stdout.$TEST_NAME
     TEST_EXP_STDERR=data/exp_stderr.$TEST_NAME
     source $TEST_NAME

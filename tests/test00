@@ -1,0 +1,36 @@
+test_body() {
+    unset PROG # otherwise it doesn't run 'standalone'
+    ../process-getopt -h
+    ../process-getopt --version
+    return $?
+}
+
+test_setup() {
+    TEST_TITLE="run process-getopt with -h, --version"
+    TEST_ARGS=""
+    TEST_IGNORE_STDOUT=
+    TEST_IGNORE_STDERR=
+    TEST_IGNORE_VALUE=
+    TEST_EXP_VAL=0
+    cat > $TEST_EXP_STDOUT <<"EOF"
+Usage: process-getopt [ OPTIONS ]
+
+Normally sourced by other scripts rather than run by itself.
+See the man page for details of functions that process-getopt provides.
+See http://sourceforge.net/projects/process-getopt
+See http://process-getopt.sourceforge.net
+See http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
+When called without options, does nothing. Otherwise:
+
+Options:
+  -h, --help                print this help and exit
+  -V, --version             print version and exit
+  -v, --verbose             do it verbosely
+  -q, --quiet               do it quietly (negates -v)
+  --                        explicitly ends the options
+  --print-man-page          print out a man page stub
+process-getopt: version 1.7
+EOF
+    cat > $TEST_EXP_STDERR <<"EOF"
+EOF
+}
