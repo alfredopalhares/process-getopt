@@ -23,10 +23,11 @@ read P
 
 DIR=process-getopt-$VERSION
 rm -rf $DIR
-mkdir -p $DIR/share/man/man1 $DIR/bin
+mkdir -p $DIR/share/man/man1 $DIR/bin $DIR/tests
 
 SCRIPTS="process-getopt boilerplate example-script testecho command-processor tiny"
 MANS="process-getopt.1"
+TESTS="tests/test* tests/runtests.sh"
 
 cp -p README $DIR/README
 cp -p INSTALL $DIR/INSTALL
@@ -35,6 +36,7 @@ cp -p COPYING ChangeLog AUTHORS $DIR/
 #sed -e "s/X\.X/$VERSION/g" <process-getopt.spec >$DIR/process-getopt.spec
 cp -p $SCRIPTS $DIR/bin/
 cp -p $MANS $DIR/share/man/man1
+cp -p $TESTS $DIR/tests
 
 tar czf ${DIR}.tgz $DIR
 echo Wrote ${DIR}.tgz
