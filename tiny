@@ -20,13 +20,10 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: tiny,v 1.2 2009/04/10 09:46:18 bhepple Exp $
-
-# error on first failed command or unreferencing a undefined variable:
-set -eu
+# $Id: tiny,v 1.3 2009/12/07 02:04:57 bhepple Exp $
 
 PROG=$(basename $0)
-VERSION='$Revision: 1.2 $'
+VERSION='$Revision: 1.3 $'
 USAGE="A tiny example using process-getopt(1)"
 
 # call process-getopt functions to define some options:
