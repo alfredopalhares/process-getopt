@@ -1,0 +1,142 @@
+#!/bin/bash
+
+# Copyright 2008-2009 Bob Hepple
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+# http://sourceforge.net/projects/process-getopt
+# http://process-getopt.sourceforge.net
+# http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
+
+# $Id: boilerplate-awk,v 1.1 2010/04/15 06:39:26 bhepple Exp $
+
+# A minimal script that wraps process-getopt for awk
+# Look for the string "CUSTOMISE".
+
+# This is much better than the version of getopt given in the gawk
+# manual as that version has no support for long options (eg --help),
+# no support for short option merging, no re-ordering and removal of
+# arguments etc. never mind the automatic help page generation
+# provided by process-getopt!
+
+# There is a known bug in that option values may not contain the '
+# character!
+
+# Also, if only awk had a eval or indirect variable names one could
+# pass in the list of option names and use the list somehow ...
+
+print_awk_script() {
+	# quote the _EOF_ so that the awk script is _not_ shell-expanded:
+    cat << '_EOF_'
+
+# MAIN PROCESSING - put your awk script here: CUSTOMISE
+
+BEGIN {
+	# This sample code just prints the values of the options and arguments
+	# passed in on the command line:
+    printf("SLOT=<%s>\n", SLOT)
+	printf("TOKEN=<%s>\n", TOKEN)
+    printf("non-option arguments:\n")
+    for (Optind = 0; Optind < ARGC; Optind++) {
+        printf("\tARGV[%d] = <%s>\n", Optind, ARGV[Optind])
+    }
+}
+_EOF_
+}
+
+check_and_process_opts() {
+    local NO_OPTS TEMP PG NAME
+
+    # avoid the overhead of process-getopt if there are no options:
+    NO_OPTS="yes"
+    for i in "$@"; do
+        case "$i" in
+            -*)
+                NO_OPTS=""
+                break
+                ;;
+            *)
+                [ "$STOP_ON_FIRST_NON_OPT" ] && break
+                ;;
+        esac
+    done
+    [ "$NO_OPTS" ] && return 1
+
+    # source process-getopt:
+    PG=$(type process-getopt |cut -d' ' -f 3)
+    [ "$PG" ] || exit 1
+    source $PG
+
+    # define our options: # CUSTOMISE
+    SLOT_func()   { [ "${1:-""}" ] && SLOT="yes"; }
+    add_opt SLOT "boolean option" s "" slot 
+    TOKEN_func()  { [ "${1:-""}" ] && TOKEN="$2"; }
+    add_opt TOKEN "option that takes a value" t n token number
+
+    # define the standard options --help etc:
+    add_std_opts 
+
+    # delete any standard options you don't want:
+    del_opt QUIET
+    del_opt END_OPTIONS
+
+    # process the command line, callback get called here:
+    TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$TEMP"
+    process_opts "$@" || shift "$?"
+
+    for NAME in $__PG_OPTION_LIST; do 
+        case "$NAME" in
+            HELP|PRINT_MAN_PAGE) ;; # these are no use to the awk program
+            *) SET_OPTIONS+="-v $NAME='${!NAME}' ";;
+        esac
+    done
+    # return the new command line (stripped of options):
+    NEW_ARGS=( "$@" )
+    return 0
+}
+
+##########################
+#         M A I N        #
+##########################
+
+PROG=$(basename $0)
+DIR=$(dirname $0)
+VERSION='$Revision: 1.1 $' # CUSTOMISE
+VERBOSE=""
+ARGUMENTS="<files>" # CUSTOMISE
+SHORT_DESC="Short description. " # CUSTOMISE
+USAGE="More detailed description." # CUSTOMISE
+SET_OPTIONS=""
+
+TMP="/tmp/tmp$$.tmp"
+trap "/bin/rm -f $TMP" EXIT 
+
+NEW_ARGS=( )
+check_and_process_opts "$@" && {
+    if [ ${#NEW_ARGS[@]} -gt 0 ]; then
+        set -- "${NEW_ARGS[@]}"
+    else
+        set --
+    fi
+}
+
+[ "$VERBOSE" ] && echo "SET_OPTIONS=<$SET_OPTIONS>"
+
+# At this point, all the options have been processed and removed from
+# the arg list. We can now process $@ as arguments to the program.
+eval awk $SET_OPTIONS -f <(print_awk_script) -- ${1+"$@"}
+
+exit 0
