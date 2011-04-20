@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.27 2011/04/20 06:24:56 bhepple Exp $
+# $Id: process-getopt,v 1.28 2011/04/20 07:37:40 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -92,14 +92,14 @@ process_getopt_version() {
 
 add_opt() {
     # parameters: use "" as the placeholder for a missing arg
-    local NAME DESC SOPT SARG LOPT LARG TYPE RANGE
+    local NAME DESC SOPT SARG LOPT LARG _PG_TYPE RANGE
     NAME="$1" # name of the option - essential
     DESC="$2" # essential except for 'silent/secret' options
     SOPT="${3:-""}" # short option letter - optional
     SARG="${4:-""}" # argument label for the short option - optional
     LOPT="${5:-""}" # long option - optional
     LARG="${6:-""}" # argument label for the long option - optional
-    TYPE="${7:-""}" # type of the argument - optional
+    _PG_TYPE="${7:-""}" # type of the argument - optional
     RANGE="${8:-""}" # range for the argument - optional
     local A
     local L
@@ -187,8 +187,8 @@ $OPT" >&2
 
 	# use a while loop just for the 'break':
 	[ "$SARG$LARG" ] && {
-		while [ "$TYPE" ]; do
-			case "$TYPE" in
+		while [ "$_PG_TYPE" ]; do
+			case "$_PG_TYPE" in
 				i|I)
 					[ "x$RANGE" = x ] && break
 					echo "$RANGE" | egrep -q "$INT_RANGE_REGEX" && break
@@ -206,7 +206,7 @@ $OPT" >&2
 					[ "x$RANGE" = x ] || break
 					;;
 				u|U)
-					TYPE=s
+					_PG_TYPE=s
 					RANGE="$URL_REGEX"
 					break
 					;;
@@ -215,7 +215,7 @@ $OPT" >&2
 			exit 1
 		done
 	}
-	export TYPE_$NAME="$TYPE"
+	export TYPE_$NAME="$_PG_TYPE"
 	export RANGE_$NAME="$RANGE"
 
     __PG_OPTION_LIST="$__PG_OPTION_LIST $NAME"
@@ -270,12 +270,12 @@ get_opt_desc() {
     local L="DESC_OPT_$NAME" 
     
     echo -n "${!L:-""}"
-	local TYPE=$(get_opt_type "$NAME")
-	[ "x$TYPE" = x ] || {
-		echo -n ". Must be of type '$TYPE'"
+	local _PG_TYPE=$(get_opt_type "$NAME")
+	[ "x$_PG_TYPE" = x ] || {
+		echo -n ". Must be of type '$_PG_TYPE'"
 		local RANGE=$(get_opt_range "$NAME")
 		[ "x$RANGE" = x ] || {
-			case "$TYPE" in
+			case "$_PG_TYPE" in
 				s|S)
 					echo -n " fitting regex '$RANGE'."
 					;;
@@ -452,7 +452,6 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" \$Id: process-getopt,v 1.27 2011/04/20 06:24:56 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -669,12 +668,12 @@ default_usage() {
 
 check_type_and_value() {
 	local VALUE="$1"
-	local TYPE="$2"
+	local _PG_TYPE="$2"
 	local RANGE="$3"
 
 	# just using 'while' for the sake of the 'break':
-	while [ "$TYPE" ]; do
-		case "$TYPE" in
+	while [ "$_PG_TYPE" ]; do
+		case "$_PG_TYPE" in
 			i|I)
 				echo "$VALUE" | egrep -q "$INT_REGEX" || break
 				[ "x$RANGE" = x ] || {
@@ -716,9 +715,9 @@ check_type_and_value() {
 	done
 
 	(
-		echo -n "$PROG: value '$VALUE' given for option '$NAME' must be of type '$TYPE'"
+		echo -n "$PROG: value '$VALUE' given for option '$NAME' must be of type '$_PG_TYPE'"
 		[ "x$RANGE" = x ] || {
-			case "$TYPE" in
+			case "$_PG_TYPE" in
 				s|S)
 					echo -n " and must fit REGEX '$RANGE'"
 					;;
@@ -777,11 +776,11 @@ process_opts() {
                 exit 1
             fi
 
-			local TYPE=$(get_opt_type "$NAME")
-			[ "$TYPE" ] && {
+			local _PG_TYPE=$(get_opt_type "$NAME")
+			[ "$_PG_TYPE" ] && {
 				local VALUE="$2"
 				local RANGE=$(get_opt_range "$NAME")
-				check_type_and_value "$2" "$TYPE" "$RANGE"
+				check_type_and_value "$2" "$_PG_TYPE" "$RANGE"
 			}
             $NAME$FUNC_SUFFIX "$1" "$2"; local STAT=$?
             shift
