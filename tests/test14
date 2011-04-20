@@ -38,7 +38,6 @@ test_setup() {
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-.\" $Id: test14,v 1.2 2011/04/20 06:54:08 bhepple Exp $
 .TH TEST_BODY 1 \" -*- nroff -*-
 .SH NAME
 test_body \- 
