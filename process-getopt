@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.29 2011/04/20 07:45:38 bhepple Exp $
+# $Id: process-getopt,v 1.30 2011/04/20 08:15:23 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -33,6 +33,7 @@
 # o easier to maintain
 # o help-page and man-page printing - all from the same data sources
 # o checking of option consistency at runtime
+# o range checking of option values at runtime
 # o pretty easy to use
 # o portable to OS's without long option support - the help page
 #   adapts too
@@ -191,11 +192,11 @@ $OPT" >&2
 			case "$_PG_TYPE" in
 				i|I)
 					[ "x$_PG_RANGE" = x ] && break
-					echo "$_PG_RANGE" | egrep -q "$INT_RANGE_REGEX" && break
+					echo "$_PG_RANGE" | egrep -q "$_PG_INT_RANGE_REGEX" && break
 					;;
 				r|R|f|F)
 					[ "x$_PG_RANGE" = x ] && break
-					echo "$_PG_RANGE" | egrep -q "$FLOAT_RANGE_REGEX" && break
+					echo "$_PG_RANGE" | egrep -q "$_PG_FLOAT_RANGE_REGEX" && break
 					;;
 				s|S)
 					[ "x$_PG_RANGE" = x ] && break
@@ -207,7 +208,7 @@ $OPT" >&2
 					;;
 				u|U)
 					_PG_TYPE=s
-					_PG_RANGE="$URL_REGEX"
+					_PG_RANGE="$_PG_URL_REGEX"
 					break
 					;;
 			esac
@@ -675,7 +676,7 @@ check_type_and_value() {
 	while [ "$_PG_TYPE" ]; do
 		case "$_PG_TYPE" in
 			i|I)
-				echo "$VALUE" | egrep -q "$INT_REGEX" || break
+				echo "$VALUE" | egrep -q "$_PG_INT_REGEX" || break
 				[ "x$_PG_RANGE" = x ] || {
 					local LOWER=$(echo "$_PG_RANGE" | cut -d- -f1)
 					local UPPER=$(echo "$_PG_RANGE" | cut -d- -f2)
@@ -869,12 +870,12 @@ __PG_LONG_OPT_COL=6
 _PG_OPT_DOC_COL=29
 __PG_RMARGIN=79
 
-INT_REGEX="[+-]*[[:digit:]]+"
-INT_RANGE_REGEX="$INT_REGEX-$INT_REGEX"
-FLOAT_REGEX="[+-]*[[:digit:]]+(\\.[[:digit:]]+)*"
-FLOAT_RANGE_REGEX="$FLOAT_REGEX-$FLOAT_REGEX"
+_PG_INT_REGEX="[+-]*[[:digit:]]+"
+_PG_INT_RANGE_REGEX="$_PG_INT_REGEX-$_PG_INT_REGEX"
+_PG_FLOAT_REGEX="[+-]*[[:digit:]]+(\\.[[:digit:]]+)*"
+_PG_FLOAT_RANGE_REGEX="$_PG_FLOAT_REGEX-$_PG_FLOAT_REGEX"
 # FIXME: this needs a few tweaks:
-URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*/[^[:space:]]*"
+_PG_URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*/[^[:space:]]*"
 
 # stubs to satisfy add_opt on standard opts:
 HELP_func() { :; }
