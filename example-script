@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2008-2009 Bob Hepple
+# Copyright 2008-2011 Bob Hepple
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: example-script,v 1.11 2009/04/10 22:11:22 bhepple Exp $
+# $Id: example-script,v 1.12 2011/04/20 06:24:56 bhepple Exp $
 
 # A tutorial example for process-getopt 
 
@@ -39,7 +39,7 @@ check_and_process_opts() {
                 break
                 ;;
             *)
-                [ "$STOP_ON_FIRST_NON_OPT" ] && break
+                [ "${STOP_ON_FIRST_NON_OPT:-""}" ] && break
                 ;;
         esac
     done
@@ -64,13 +64,19 @@ check_and_process_opts() {
     CD_func()     { [ "${1:-""}" ] && echo "$PROG: got a CD option"; }
     SLOT_func()   { [ "${1:-""}" ] && echo "$PROG: got a SLOT option = \"$2\""; }
     TOKEN_func()  { [ "${1:-""}" ] && echo "$PROG: got a TOKEN option = \"$2\""; }
+    FLOAT_func()  { [ "${1:-""}" ] && echo "$PROG: got a FLOAT option = \"$2\""; }
+    URL_func()    { [ "${1:-""}" ] && echo "$PROG: got a URL option = \"$2\""; }
+    ARRAY_func()  { [ "${1:-""}" ] && echo "$PROG: got an ARRAY option = \"$2\""; }
     LONG_func()   { [ "${1:-""}" ] && echo "$PROG: got a LONG option"; }
     SILENT_func() { [ "${1:-""}" ] && echo "$PROG: got a SILENT option"; }
 
     # Now we define the options:
     add_opt CD "foobar" c "" cdrom
     add_opt SLOT "option that takes a value" s n slot number
-    add_opt TOKEN "option that takes a value" t n token number
+    add_opt TOKEN "option that takes a value" t n token number i 1-10
+    add_opt FLOAT "option that takes a floating point value" f f float float f 1.0-3
+    add_opt URL "option that takes a URL value" u url url url u
+    add_opt ARRAY "option that takes an ARRAY value" a value array value a "A B C"
     add_opt LONG "a long option without a short one" "" "" "long"
     add_opt SILENT "" S # does not appear in help or man page
     # These would generate errors:
@@ -106,6 +112,8 @@ man page. Try running this with the --help or --print-man-page options."
 
 TMP="/tmp/tmp$$.tmp"
 trap "/bin/rm -f $TMP" EXIT 
+
+STOP_ON_FIRST_NON_OPT=yes
 
 NEW_ARGS=( )
 check_and_process_opts "$@" && {

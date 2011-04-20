@@ -1,5 +1,5 @@
 # -*- shell-script -*-
-# Copyright 2008-2009 Bob Hepple
+# Copyright 2008-2011 Bob Hepple
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.26 2009/04/11 04:05:47 bhepple Exp $
+# $Id: process-getopt,v 1.27 2011/04/20 06:24:56 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -37,71 +37,12 @@
 # o portable to OS's without long option support - the help page
 #   adapts too
 
-# It's easier to see it in an example than to read an explanation, so 
-# look at boilerplate first, and then come back here if you want the 
-# explanation. Also see the man page process-getopt(1).
-#
-# 1. define these:
-# PROG=$(basename $0)
-# VERSION="1.0"
-# SHORT_DESC="one liner for man page"
-# ARGUMENTS="foobar barfoo [ files ] [ more-args ]"
-# USAGE="\
-# usage string - for help page and man page - can be quite long
-# "
-# usage() {
-#    echo "Usage: $PROG [ OPTIONS ] $ARGUMENTS"
-#    echo "$USAGE"
-#    echo
-#    echo "Options:"
-# }
-#
-# 2. 'source' this file 
-# PG=$(type process-getopt |cut -d' ' -f 3)
-# [ "$PG" ] || exit 1
-# . $PG
-#
-# 3. define a function for each option - call it FOOBAR_func. It is
-# called by process_opts if the option is present. It is also called
-# by add_opt (with no args) to check that it is there.
-# 
-# FOOBAR_func() { [ "$1" ] && echo "$PROG: got a FOOBAR option"; }
-#
-# 4. define your options by calling add_opt as follows:
-# add_opt FOOBAR "bars the foo and foos the bar" f "foobar" foo "foobar"
-# add_std_opts
-# 
-# 5. call_getopt like this:
-# TEMP=$(call_getopt "$@") || exit 1
-# eval set -- "$TEMP"
-# unset TEMP
-#
-# 6. call process_opts like this:
-# process_opts "$@"; shift "$?"
-#
-# 7. $@ now contains all your non-option arguments
-#
-# Function list:
-# --------------
-#
-# These are the main players: see the code for more doco
-#
-# add_opt - add an option
-# add_std_opts - adds help, verbose, version & print-man-page options
-# call_getopt - assembles the option lists and calls getopt
-# process_opts - calls your helper functions to process the options
-
-# An internal magic option '--print-man-page' prints a skeleton man page
-# using your option definitions and usage
-
-# Note that options are printed out in the order they were defined by
-# add_opt - and the 'standard' options follow.
-
-# todo:
-# python, c, perl versions of this. ruby? c++? java?
+# It's easier to see it in an example than to read an explanation, so
+# look at boilerplate first, and then see the man page
+# process-getopt(1).
 
 # tested on bash-2.04
-# Certainly would not work on plain old sh.
+# Certainly would not work on plain old sh, csh, ksh ... .
 
 # try and write this test to be legal in sh/bash-1.x:
 GOOD_ENOUGH=""
@@ -151,13 +92,15 @@ process_getopt_version() {
 
 add_opt() {
     # parameters: use "" as the placeholder for a missing arg
-    local NAME DESC SOPT SARG LOPT LARG
+    local NAME DESC SOPT SARG LOPT LARG TYPE RANGE
     NAME="$1" # name of the option - essential
     DESC="$2" # essential except for 'silent/secret' options
     SOPT="${3:-""}" # short option letter - optional
     SARG="${4:-""}" # argument label for the short option - optional
     LOPT="${5:-""}" # long option - optional
     LARG="${6:-""}" # argument label for the long option - optional
+    TYPE="${7:-""}" # type of the argument - optional
+    RANGE="${8:-""}" # range for the argument - optional
     local A
     local L
     local ALLOWED_CHARS='[a-zA-Z0-9_][a-zA-Z0-9_]*'
@@ -241,6 +184,40 @@ $OPT" >&2
     if [ "$DESC" ]; then
         export DESC_OPT_$NAME="$DESC"
     fi
+
+	# use a while loop just for the 'break':
+	[ "$SARG$LARG" ] && {
+		while [ "$TYPE" ]; do
+			case "$TYPE" in
+				i|I)
+					[ "x$RANGE" = x ] && break
+					echo "$RANGE" | egrep -q "$INT_RANGE_REGEX" && break
+					;;
+				r|R|f|F)
+					[ "x$RANGE" = x ] && break
+					echo "$RANGE" | egrep -q "$FLOAT_RANGE_REGEX" && break
+					;;
+				s|S)
+					[ "x$RANGE" = x ] && break
+					echo "" | egrep -q "$RANGE"
+					[ $? -eq 2 ] || break
+					;;
+				a|A) 
+					[ "x$RANGE" = x ] || break
+					;;
+				u|U)
+					TYPE=s
+					RANGE="$URL_REGEX"
+					break
+					;;
+			esac
+			echo "$PROG: process-getopt: bad argument type ('$NAME') or range ('$RANGE') for option '$NAME'." |fmt >&2
+			exit 1
+		done
+	}
+	export TYPE_$NAME="$TYPE"
+	export RANGE_$NAME="$RANGE"
+
     __PG_OPTION_LIST="$__PG_OPTION_LIST $NAME"
 }
 
@@ -274,17 +251,46 @@ get_opt_larg() {
     echo -n "${!L:-""}"
 }
 
+get_opt_type() {
+	local NAME="$1"
+	local T="TYPE_$NAME"
+
+	echo -n "${!T:-""}"
+}
+
+get_opt_range() {
+	local NAME="$1"
+	local R="RANGE_$NAME"
+
+	echo -n "${!R:-""}"
+}
+
 get_opt_desc() {
     local NAME="$1"
     local L="DESC_OPT_$NAME" 
     
     echo -n "${!L:-""}"
+	local TYPE=$(get_opt_type "$NAME")
+	[ "x$TYPE" = x ] || {
+		echo -n ". Must be of type '$TYPE'"
+		local RANGE=$(get_opt_range "$NAME")
+		[ "x$RANGE" = x ] || {
+			case "$TYPE" in
+				s|S)
+					echo -n " fitting regex '$RANGE'."
+					;;
+				*)
+					echo -n " in the range '$RANGE'."
+					;;
+			esac
+		}
+	}
 }
 
 del_opt() {
     local NAME
     for NAME in "$@"; do
-        for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_; do
+        for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_ TYPE_ RANGE_; do
             local N=$PRE$NAME
             [ "${!N:-""}" ] && unset $PRE$NAME
         done
@@ -446,7 +452,7 @@ print_man_page() {
     ARGS=$(print_all_args man)
 
     cat <<EOF
-.\" $Id: process-getopt,v 1.26 2009/04/11 04:05:47 bhepple Exp $
+.\" \$Id: process-getopt,v 1.27 2011/04/20 06:24:56 bhepple Exp $
 .TH `echo $PROG|tr '[a-z]' '[A-Z]'` 1 \" -*- nroff -*-
 .SH NAME
 $PROG \- $SHORT_DESC
@@ -482,7 +488,7 @@ Written by Foo Bar <foobar@foobar.org>
 .P
 .RB http://foobar.foobar.org/foobar
 .SH "COPYRIGHT"
-Copyright (c) 2008-2009 Robert Hepple
+Copyright (c) 2008-2011 Robert Hepple
 .br
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -660,6 +666,73 @@ default_usage() {
     echo "Options:"
     print_all_opts
 }
+
+check_type_and_value() {
+	local VALUE="$1"
+	local TYPE="$2"
+	local RANGE="$3"
+
+	# just using 'while' for the sake of the 'break':
+	while [ "$TYPE" ]; do
+		case "$TYPE" in
+			i|I)
+				echo "$VALUE" | egrep -q "$INT_REGEX" || break
+				[ "x$RANGE" = x ] || {
+					local LOWER=$(echo "$RANGE" | cut -d- -f1)
+					local UPPER=$(echo "$RANGE" | cut -d- -f2)
+					[[ "$LOWER" && "$VALUE" -lt "$LOWER" ]] && break
+					[[ "$UPPER" && "$VALUE" -gt "$UPPER" ]] && break
+				}
+				return 0
+				;;
+			r|R|f|F)
+				echo "$VALUE" | egrep -q "$FLOAT_REGEX" || break
+				[ "x$RANGE" = x ] || {
+					local LOWER=$(echo "$RANGE" | cut -d- -f1)
+					local UPPER=$(echo "$RANGE" | cut -d- -f2)
+					[ "$LOWER" ] && {
+						awk "BEGIN {if ($VALUE < $LOWER) {exit 1} else {exit 0}}" || break
+					}
+					[ "$UPPER" ] && {
+						awk "BEGIN {if ($VALUE > $UPPER) {exit 1} else {exit 0}}" || break
+					}
+				}
+				return 0
+				;;
+			s|S)
+				[ "x$RANGE" = x ] || {
+					echo "$VALUE" | egrep -q "$RANGE" || break
+				}
+				return 0
+				;;
+			a|A)
+				local VAL
+				for VAL in $RANGE; do
+					[ "$VAL" = "$VALUE" ] && return 0
+				done
+				break
+				;;
+		esac
+	done
+
+	(
+		echo -n "$PROG: value '$VALUE' given for option '$NAME' must be of type '$TYPE'"
+		[ "x$RANGE" = x ] || {
+			case "$TYPE" in
+				s|S)
+					echo -n " and must fit REGEX '$RANGE'"
+					;;
+				a|A)
+					echo -n " and must be one of these values: $RANGE"
+					;;
+				i|I|f|F) echo -n " and in range '$RANGE'"
+					;;
+			esac
+		}
+		echo
+	) | fmt >&2
+	exit 1
+}
     
 process_opts() {
     local SHIFT_NUM=0
@@ -703,6 +776,13 @@ process_opts() {
                 echo "$PROG: process-getopt: process_opts: no function for option \"$1\"" >&2
                 exit 1
             fi
+
+			local TYPE=$(get_opt_type "$NAME")
+			[ "$TYPE" ] && {
+				local VALUE="$2"
+				local RANGE=$(get_opt_range "$NAME")
+				check_type_and_value "$2" "$TYPE" "$RANGE"
+			}
             $NAME$FUNC_SUFFIX "$1" "$2"; local STAT=$?
             shift
             ((SHIFT_NUM++))
@@ -741,9 +821,9 @@ get_opt_name() {
     return 1
 }
 
-__PG_VERSION="1.7"
+__PG_VERSION="2.0"
 __PG_STANDALONE=""
-
+STOP_ON_FIRST_NON_OPT=${STOP_ON_FIRST_NON_OPT:-""}
 # First some safety checks:
 [ "$PROG" ] || { 
     PROG=$(basename $0)
@@ -789,6 +869,13 @@ __PG_SHORT_OPT_COL=2
 __PG_LONG_OPT_COL=6
 _PG_OPT_DOC_COL=29
 __PG_RMARGIN=79
+
+INT_REGEX="[+-]*[[:digit:]]+"
+INT_RANGE_REGEX="$INT_REGEX-$INT_REGEX"
+FLOAT_REGEX="[+-]*[[:digit:]]+(\\.[[:digit:]]+)*"
+FLOAT_RANGE_REGEX="$FLOAT_REGEX-$FLOAT_REGEX"
+# FIXME: this needs a few tweaks:
+URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*/[^[:space:]]*"
 
 # stubs to satisfy add_opt on standard opts:
 HELP_func() { :; }
