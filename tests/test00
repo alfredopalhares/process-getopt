@@ -29,7 +29,7 @@ Options:
   -q, --quiet               do it quietly (negates -v)
   --                        explicitly ends the options
   --print-man-page          print out a man page stub
-process-getopt: version 1.7
+process-getopt: version 2.0
 EOF
     cat > $TEST_EXP_STDERR <<"EOF"
 EOF

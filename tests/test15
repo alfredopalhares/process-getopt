@@ -6,7 +6,7 @@ test_body() {
 
     ASDA=""
     ASDA_func() { [ "${1:-""}" ] && ASDA="$2"; }
-    add_opt "ASDA" "asda description" a arg asda argl
+    add_opt "ASDA" "asda description" a arg asda argl s "a b c d"
 
     SILENT=""
     SILENT_func() { [ "${1:-""}" ] && SILENT="$2"; }
@@ -20,10 +20,13 @@ test_body() {
 
     echo "get_opt_letter BOOL:    \"`get_opt_letter BOOL`\""
     echo "get_opt_string ASDA:    \"`get_opt_string ASDA`\""
+    echo "get_opt_type ASDA:      \"`get_opt_type ASDA`\""
+    echo "get_opt_range ASDA:     \"`get_opt_range ASDA`\""
     echo "get_opt_sarg SILENT:    \"`get_opt_sarg SILENT`\""
     echo "get_opt_larg SILENT:    \"`get_opt_larg SILENT`\""
     echo "get_opt_desc BOOL:      \"`get_opt_desc BOOL`\""
     echo "get_opt_name -b:        \"`get_opt_name -b`\""
+    echo "get_opt_name --asda:    \"`get_opt_name --asda`\""
     echo "process_getopt_version: \"`process_getopt_version`\""
     return 0
 }
@@ -38,11 +41,14 @@ test_setup() {
     cat > $TEST_EXP_STDOUT <<"EOF"
 get_opt_letter BOOL:    "b"
 get_opt_string ASDA:    "asda"
+get_opt_type ASDA:      "s"
+get_opt_range ASDA:     "a b c d"
 get_opt_sarg SILENT:    "arg"
 get_opt_larg SILENT:    "argl"
 get_opt_desc BOOL:      "bool description"
 get_opt_name -b:        "BOOL"
-process_getopt_version: "1.7"
+get_opt_name --asda:    "ASDA"
+process_getopt_version: "2.0"
 EOF
     cat > $TEST_EXP_STDERR <<"EOF"
 EOF

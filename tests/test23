@@ -1,23 +1,23 @@
 test_body() {
-    (cd ..; sh ./example-script $@)
+    (cd ..; PATH=$(pwd):$PATH; bash ./example-script $@)
     return $?
 }
 
 test_setup() {
-    TEST_ARGS="-s -t token --long value -c"
-    TEST_TITLE="tiny $TEST_ARGS"
+    TEST_ARGS="-s 1 -t 2 --long value -c"
+    TEST_TITLE="example-script $TEST_ARGS"
     TEST_IGNORE_STDOUT=
     TEST_IGNORE_STDERR=
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-example-script: got a SLOT option = "-t"
+example-script: got a SLOT option = "1"
+example-script: got a TOKEN option = "2"
+example-script: got a LONG option
 Remaining args:
-"token"
-"--long"
 "value"
 "-c"
-example-script operating on these: token --long value -c
+example-script operating on these: value -c
 EOF
     cat > $TEST_EXP_STDERR <<"EOF"
 EOF

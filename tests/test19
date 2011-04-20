@@ -1,5 +1,5 @@
 test_body() {
-    ../boilerplate -h
+    (cd ..; PATH=$(pwd):$PATH; ./boilerplate -h)
     return 0
 }
 
@@ -18,7 +18,8 @@ Short description. More detailed description.
 
 Options:
   -s, --slot                boolean option
-  -t n, --token=number      option that takes a value
+  -t n, --token=number      option that takes a value. Must be of type 'i'
+                            in the range '1-2'.
   -h, --help                print this help and exit
   -V, --version             print version and exit
   -v, --verbose             do it verbosely

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copyright 2008-2009 Bob Hepple
+# Copyright 2008-2011 Bob Hepple
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: runtests.sh,v 1.3 2009/04/11 22:29:08 bhepple Exp $
+# $Id: runtests.sh,v 1.4 2011/04/20 06:54:08 bhepple Exp $
 
 # error on first failed command or unreferencing a undefined variable:
 set -eu
@@ -37,7 +37,7 @@ check_and_process_opts() {
                 break
                 ;;
             *)
-                [ "$STOP_ON_FIRST_NON_OPT" ] && break
+                [ "${STOP_ON_FIRST_NON_OPT:-""}" ] && break
                 ;;
         esac
     done
@@ -45,8 +45,8 @@ check_and_process_opts() {
 
     source ../process-getopt
 
-    STOP_func() { [ "${1:-""}" ] && STOP="yes"; }
-    add_opt STOP "stop on first error" s "" stop
+    STOP_func() { [ "${1:-""}" ] && STOP=; }
+    add_opt STOP "don't stop on first error" s "" stop
 
     # define the standard options --help etc:
     add_std_opts 
@@ -71,13 +71,13 @@ check_and_process_opts() {
 BASH_CANDIDATES="bash-2.04 bash-2.05 bash-4.0"
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.3 $' # CUSTOMISE
+VERSION='$Revision: 1.4 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="[tests ...]" # CUSTOMISE
 SHORT_DESC="Run regression tests on process-getopt. " # CUSTOMISE
 USAGE="If no tests are given on the command line, run all test*. \
 Tests against $BASH_CANDIDATES if they are available." # CUSTOMISE
-STOP=""
+STOP=yes
 NUM_PASSED=0
 NUM_FAILED=0
 
@@ -129,24 +129,33 @@ for TEST_NAME in $TESTS; do
         $VARIANT -c "source $TEST_NAME; test_body $TEST_ARGS" > $TEST_ACT_STDOUT 2> $TEST_ACT_STDERR || TEST_ACT_VAL=$?
         if [ -z "$TEST_IGNORE_STDOUT" ]; then
             if ! cmp $TEST_EXP_STDOUT $TEST_ACT_STDOUT > /dev/null; then
-                echo "Error: in stdout"
+				echo
+				echo "*************************************************************"
+                echo "Error: in stdout: diff $TEST_EXP_STDOUT $TEST_ACT_STDOUT:"
+				diff $TEST_EXP_STDOUT $TEST_ACT_STDOUT
                 FAILED="yes"
             fi
         fi
         
         if [ -z "$TEST_IGNORE_STDERR" ]; then
             if ! cmp $TEST_EXP_STDERR $TEST_ACT_STDERR > /dev/null; then
-                echo "Error: in stderr"
+				echo
+				echo "*************************************************************"
+                echo "Error: in stderr: diff  $TEST_EXP_STDERR $TEST_ACT_STDERR"
+				diff $TEST_EXP_STDERR $TEST_ACT_STDERR
                 FAILED="yes"
             fi
         fi
         if [ -z "$TEST_IGNORE_VALUE" ]; then
             if [ $TEST_EXP_VAL -ne $TEST_ACT_VAL ]; then
+				echo
+				echo "*************************************************************"
                 echo "Error: returned $TEST_ACT_VAL instead of $TEST_EXP_VAL"
                 FAILED="yes"
             fi
         fi
         if [ "$FAILED" ]; then
+			echo "*************************************************************"
             echo "$TEST_NAME failed"
             NUM_FAILED=$(($NUM_FAILED + 1))
             [ "$STOP" ] && exit 1

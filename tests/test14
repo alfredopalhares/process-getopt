@@ -12,6 +12,10 @@ test_body() {
     SILENT_func() { [ "${1:-""}" ] && SILENT="$2"; }
     add_opt "SILENT" "silent description" s arg silent argl
 
+	INT=""
+	INT_func() { [ "${1:-""}" ] && INT="$2"; }
+    add_opt "INT" "int description" i integer int integer i 1-2
+
     add_std_opts     # define the standard options --help etc:
     del_opt QUIET END_OPTIONS
     TEMP=$(call_getopt "$@") || exit 1
@@ -20,6 +24,7 @@ test_body() {
     echo "BOOL=$BOOL"
     echo "ASDA=$ASDA"
     echo "SILENT=$SILENT"
+	echo "INT=$INT"
     for i in $@; do echo -n "\"$i\" "; done
     echo
     return 0
@@ -33,7 +38,7 @@ test_setup() {
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-.\" : process-getopt,v 1.26 2009/04/11 04:05:47 bhepple Exp $
+.\" $Id: test14,v 1.2 2011/04/20 06:54:08 bhepple Exp $
 .TH TEST_BODY 1 \" -*- nroff -*-
 .SH NAME
 test_body \- 
@@ -44,7 +49,7 @@ test_body \-
 .RB "[" \-bhVv "]"
 [
 .B \-\-bool \-\-help \-\-version \-\-verbose
-] [\fB\-a\fP \fIarg\fP,\fB\-\-asda\fP=\fIargl\fP] [\fB\-s\fP \fIarg\fP,\fB\-\-silent\fP=\fIargl\fP]
+] [\fB\-a\fP \fIarg\fP,\fB\-\-asda\fP=\fIargl\fP] [\fB\-s\fP \fIarg\fP,\fB\-\-silent\fP=\fIargl\fP] [\fB\-i\fP \fIinteger\fP,\fB\-\-int\fP=\fIinteger\fP]
 
 .ad b
 .hy 0
@@ -62,6 +67,9 @@ asda description
 .TP
 .B \fB\-s\fP \fIarg\fR, \fB\-\-silent\fP\fI=argl\fR
 silent description
+.TP
+.B \fB\-i\fP \fIinteger\fR, \fB\-\-int\fP\fI=integer\fR
+int description. Must be of type 'i' in the range '1-2'.
 .TP
 .B \fB\-h\fP, \fB\-\-help\fP
 print this help and exit
@@ -83,7 +91,7 @@ Written by Foo Bar <foobar@foobar.org>
 .P
 .RB http://foobar.foobar.org/foobar
 .SH "COPYRIGHT"
-Copyright (c) 2008-2009 Robert Hepple
+Copyright (c) 2008-2011 Robert Hepple
 .br
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

@@ -1,11 +1,11 @@
 test_body() {
-    ../boilerplate $@
+    (cd ..; PATH=$(pwd):$PATH; ./boilerplate $@)
     return $?
 }
 
 test_setup() {
-    TEST_TITLE="boilerplate -s -t qweqwe -v asdasd"
-    TEST_ARGS="-s -t qweqwe asdasd"
+    TEST_TITLE="boilerplate -s -t 1 -v asdasd"
+    TEST_ARGS="-s -t 1 asdasd"
     TEST_IGNORE_STDOUT=
     TEST_IGNORE_STDERR=
     TEST_IGNORE_VALUE=

@@ -35,6 +35,6 @@ test_setup() {
     cat > $TEST_EXP_STDOUT <<"EOF"
 EOF
     cat > $TEST_EXP_STDERR <<"EOF"
-test_body: option requires an argument -- a
+test_body: option requires an argument -- 'a'
 EOF
 }
