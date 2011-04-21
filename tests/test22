@@ -1,11 +1,11 @@
 test_body() {
-    (cd ..; PATH=$(pwd):$PATH; sh ./command-processor $@)
+    (cd ..; PATH=$(pwd):$PATH; bash ./command-processor $@)
     return $?
 }
 
 test_setup() {
     TEST_ARGS="-s -t token --long-only=value -c -c add -h"
-    TEST_TITLE="tiny $TEST_ARGS"
+    TEST_TITLE="command-processor $TEST_ARGS"
     TEST_IGNORE_STDOUT=
     TEST_IGNORE_STDERR=
     TEST_IGNORE_VALUE=

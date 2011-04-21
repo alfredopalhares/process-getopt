@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: runtests.sh,v 1.4 2011/04/20 06:54:08 bhepple Exp $
+# $Id: runtests.sh,v 1.5 2011/04/21 01:22:11 bhepple Exp $
 
 # error on first failed command or unreferencing a undefined variable:
 set -eu
@@ -71,7 +71,7 @@ check_and_process_opts() {
 BASH_CANDIDATES="bash-2.04 bash-2.05 bash-4.0"
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.4 $' # CUSTOMISE
+VERSION='$Revision: 1.5 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="[tests ...]" # CUSTOMISE
 SHORT_DESC="Run regression tests on process-getopt. " # CUSTOMISE
@@ -132,7 +132,7 @@ for TEST_NAME in $TESTS; do
 				echo
 				echo "*************************************************************"
                 echo "Error: in stdout: diff $TEST_EXP_STDOUT $TEST_ACT_STDOUT:"
-				diff $TEST_EXP_STDOUT $TEST_ACT_STDOUT
+				diff $TEST_EXP_STDOUT $TEST_ACT_STDOUT || :
                 FAILED="yes"
             fi
         fi
@@ -142,10 +142,11 @@ for TEST_NAME in $TESTS; do
 				echo
 				echo "*************************************************************"
                 echo "Error: in stderr: diff  $TEST_EXP_STDERR $TEST_ACT_STDERR"
-				diff $TEST_EXP_STDERR $TEST_ACT_STDERR
+				diff $TEST_EXP_STDERR $TEST_ACT_STDERR || :
                 FAILED="yes"
             fi
         fi
+
         if [ -z "$TEST_IGNORE_VALUE" ]; then
             if [ $TEST_EXP_VAL -ne $TEST_ACT_VAL ]; then
 				echo
