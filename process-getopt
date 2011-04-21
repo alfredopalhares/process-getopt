@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.30 2011/04/20 08:15:23 bhepple Exp $
+# $Id: process-getopt,v 1.31 2011/04/21 01:21:30 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -46,21 +46,21 @@
 # Certainly would not work on plain old sh, csh, ksh ... .
 
 # try and write this test to be legal in sh/bash-1.x:
-_PG_GOOD_ENOUGH=""
+__PG_GOOD_ENOUGH=""
 if [ "x$BASH_VERSION" = "x" -o "x$BASH_VERSINFO" = "x" ]; then
     :
 elif [ "${BASH_VERSINFO[0]}" -gt 2 ]; then
-    _PG_GOOD_ENOUGH="1"
+    __PG_GOOD_ENOUGH="1"
 elif [ "${BASH_VERSINFO[0]}" -eq 2 -a "${BASH_VERSINFO[1]}" -ge 4 ]; then
-    _PG_GOOD_ENOUGH="1"
+    __PG_GOOD_ENOUGH="1"
 fi
-if [ "x$_PG_GOOD_ENOUGH" = "x" ]; then
+if [ "x$__PG_GOOD_ENOUGH" = "x" ]; then
     echo "This version of the shell does not support process-getopt" >&2
     echo "bash-2.04 or later is required" >&2
     exit 1
 fi
 
-process_getopt_usage() {
+__PG_process_getopt_usage() {
     echo "Usage: $PROG [ OPTIONS ]"
     echo
     echo "Normally sourced by other scripts rather than run by itself."
@@ -72,7 +72,7 @@ process_getopt_usage() {
     echo
     echo "Options:"
     print_all_opts
-    echo "  --$PRINTMAN_loption          print out a man page stub"
+    echo "  --$__GPG_PRINTMAN_loption          print out a man page stub"
 }
 
 # make sure our address space is clean - particularly for when we call
@@ -83,43 +83,44 @@ process_getopt_usage() {
 # options then call clean_process_getopt and then use process-getopt
 # again to process the command options. 
 clean_process_getopt() {
-    unset ${!SOPT*} ${!LOPT*} ${!DESC_OPT*} ${!ARG_SOPT*} ${!ARG_LOPT*}
-    __PG_OPTION_LIST=""
+	# note: the specifically does not unset _GPG_* parameters - these
+	# are global constants and may still be needed.
+    unset ${!__PG_*}
 }
 
 process_getopt_version() {
-    echo "$__PG_VERSION"
+    echo "$__GPG_VERSION"
 }
 
 add_opt() {
     # parameters: use "" as the placeholder for a missing arg
-    local _PG_NAME _PG_DESC SOPT SARG LOPT LARG _PG_TYPE _PG_RANGE
-    _PG_NAME="$1" # name of the option - essential
-    _PG_DESC="$2" # essential except for 'silent/secret' options
+    local NAME DESC SOPT SARG LOPT LARG TYPE RANGE
+    NAME="$1" # name of the option - essential
+    DESC="$2" # essential except for 'silent/secret' options
     SOPT="${3:-""}" # short option letter - optional
     SARG="${4:-""}" # argument label for the short option - optional
     LOPT="${5:-""}" # long option - optional
     LARG="${6:-""}" # argument label for the long option - optional
-    _PG_TYPE="${7:-""}" # type of the argument - optional
-    _PG_RANGE="${8:-""}" # range for the argument - optional
+    TYPE="${7:-""}" # type of the argument - optional
+    RANGE="${8:-""}" # range for the argument - optional
     local A
     local L
     local ALLOWED_CHARS='[a-zA-Z0-9_][a-zA-Z0-9_]*'
     local OPT
 
-    [ "$_PG_NAME" ] || { 
+    [ "$NAME" ] || { 
         echo "$PROG: process-getopt: add_opt requires a name" >&2
         exit 1
     }
-    # [[ "$_PG_NAME" =~ $ALLOWED_CHARS ]] || { ... this needs bash-3
-    [ `echo $_PG_NAME |tr -d '[:alnum:]' |tr -d '[_]'` ] && {
-        echo "$PROG: process-getopt: apt_opt: NAME (\"$_PG_NAME\") must obey the regexp $ALLOWED_CHARS" >&2
+    # [[ "$NAME" =~ $ALLOWED_CHARS ]] || { ... this needs bash-3
+    [ `echo $NAME |tr -d '[:alnum:]' |tr -d '[_]'` ] && {
+        echo "$PROG: process-getopt: apt_opt: NAME (\"$NAME\") must obey the regexp $ALLOWED_CHARS" >&2
         exit 1
     }
 
     # check at least a short or a long option is given:
     [ "$SOPT$LOPT" ] || {
-        echo "$PROG: process-getopt: add_opt: option $_PG_NAME needs a short or a long option" >&2
+        echo "$PROG: process-getopt: add_opt: option $NAME needs a short or a long option" >&2
         exit 1
     }
 
@@ -127,9 +128,9 @@ add_opt() {
     # it is supposed to do nothing - but if it is undefined then we get
     # error 127:
     local STAT=0
-    ${_PG_NAME}$FUNC_SUFFIX 2>/dev/null || STAT=$?
+    ${NAME}$__GPG_FUNC_SUFFIX 2>/dev/null || STAT=$?
     if [ $STAT -eq 127 ]; then
-        echo "$PROG: process-getopt: option $_PG_NAME has no helper function $_PG_NAME$FUNC_SUFFIX" >&2
+        echo "$PROG: process-getopt: option $NAME has no helper function $NAME$__GPG_FUNC_SUFFIX" >&2
         exit 1
     fi
 
@@ -140,16 +141,16 @@ add_opt() {
     [ "$SARG$LARG" ] && A="A" || A=""
 
     # check it's not already in use
-    for OPT in $__PG_OPTION_LIST; do 
-        if [ "$_PG_NAME" = "$OPT" ]; then
-            echo "$PROG: process-getopt: option name \"$_PG_NAME\" is already in use" >&2
+    for OPT in ${__PG_OPTION_LIST:-""}; do 
+        if [ "$NAME" = "$OPT" ]; then
+            echo "$PROG: process-getopt: option name \"$NAME\" is already in use" >&2
             exit 1
         fi
         # check it's not already in use - cover the case of with and
         # without args:
         if [ "$SOPT" ]; then
             for SUFFIX in "" "A"; do
-                L="SOPT${SUFFIX}_$OPT"
+                L="__PG_SOPT${SUFFIX}_$OPT"
                 if [ "$SOPT" = "${!L:-""}" ]; then
                     echo "$PROG: process-getopt: short option \"$SOPT\" is already in use by \
 $OPT" >&2
@@ -159,7 +160,7 @@ $OPT" >&2
         fi
         if [ "$LOPT" ]; then
             for SUFFIX in "" "A"; do
-                L="LOPT${SUFFIX}_$OPT"
+                L="__PG_LOPT${SUFFIX}_$OPT"
                 if [ "$LOPT" = "${!L:-""}" ]; then
                     echo "$PROG: process-getopt: long option \"$LOPT\" is already in use by $OPT" >&2
                     exit 1
@@ -170,118 +171,118 @@ $OPT" >&2
 
     if [ "$SOPT" ]; then
         [ ${#SOPT} -ne 1 ] && {
-            echo "$PROG: process-getopt: short option \"$SOPT\" for option $_PG_NAME is not a single character" >&2
+            echo "$PROG: process-getopt: short option \"$SOPT\" for option $NAME is not a single character" >&2
             exit 1
         }
-        export SOPT${A}_$_PG_NAME="$SOPT"
-        [ "$SARG" ] && export ARG_SOPTA_$_PG_NAME="$SARG"
+        export __PG_SOPT${A}_$NAME="$SOPT"
+        [ "$SARG" ] && export __PG_ARG_SA_$NAME="$SARG"
     fi
 
     if [ "$LOPT" ]; then
-        export LOPT${A}_$_PG_NAME="$LOPT"
-        [ "$LARG" ] && export ARG_LOPTA_$_PG_NAME="$LARG"
+        export __PG_LOPT${A}_$NAME="$LOPT"
+        [ "$LARG" ] && export __PG_ARG_LA_$NAME="$LARG"
     fi
 
-    if [ "$_PG_DESC" ]; then
-        export DESC_OPT_$_PG_NAME="$_PG_DESC"
+    if [ "$DESC" ]; then
+        export __PG_DESC_OPT_$NAME="$DESC"
     fi
 
 	# use a while loop just for the 'break':
 	[ "$SARG$LARG" ] && {
-		while [ "$_PG_TYPE" ]; do
-			case "$_PG_TYPE" in
+		while [ "$TYPE" ]; do
+			case "$TYPE" in
 				i|I)
-					[ "x$_PG_RANGE" = x ] && break
-					echo "$_PG_RANGE" | egrep -q "$_PG_INT_RANGE_REGEX" && break
+					[ "x$RANGE" = x ] && break
+					echo "$RANGE" | egrep -q "$__GPG_INT_RANGE_REGEX" && break
 					;;
 				r|R|f|F)
-					[ "x$_PG_RANGE" = x ] && break
-					echo "$_PG_RANGE" | egrep -q "$_PG_FLOAT_RANGE_REGEX" && break
+					[ "x$RANGE" = x ] && break
+					echo "$RANGE" | egrep -q "$__GPG_FLOAT_RANGE_REGEX" && break
 					;;
 				s|S)
-					[ "x$_PG_RANGE" = x ] && break
-					echo "" | egrep -q "$_PG_RANGE"
+					[ "x$RANGE" = x ] && break
+					echo "" | egrep -q "$RANGE"
 					[ $? -eq 2 ] || break
 					;;
 				a|A) 
-					[ "x$_PG_RANGE" = x ] || break
+					[ "x$RANGE" = x ] || break
 					;;
 				u|U)
-					_PG_TYPE=s
-					_PG_RANGE="$_PG_URL_REGEX"
+					TYPE=s
+					RANGE="$__GPG_URL_REGEX"
 					break
 					;;
 			esac
-			echo "$PROG: process-getopt: bad argument type ('$_PG_NAME') or range ('$_PG_RANGE') for option '$_PG_NAME'." |fmt >&2
+			echo "$PROG: process-getopt: bad argument type ('$NAME') or range ('$RANGE') for option '$NAME'." |fmt >&2
 			exit 1
 		done
 	}
-	export TYPE_$_PG_NAME="$_PG_TYPE"
-	export RANGE_$_PG_NAME="$_PG_RANGE"
+	export __PG_TYPE_$NAME="$TYPE"
+	export __PG_RANGE_$NAME="$RANGE"
 
-    __PG_OPTION_LIST="$__PG_OPTION_LIST $_PG_NAME"
+    __PG_OPTION_LIST="${__PG_OPTION_LIST:-''} $NAME"
 }
 
 get_opt_letter() {
-    local _PG_NAME="$1"
-    local L="SOPT_$_PG_NAME" 
+    local NAME="$1"
+    local L="__PG_SOPT_$NAME" 
     
-    [ "${!L:-""}" ] || L="SOPTA_$_PG_NAME"
+    [ "${!L:-""}" ] || L="__PG_SOPTA_$NAME"
     echo -n  "${!L:-""}"
 }
 
 get_opt_string() {
-    local _PG_NAME="$1"
-    local L="LOPT_$_PG_NAME" 
+    local NAME="$1"
+    local L="__PG_LOPT_$NAME" 
     
-    [ "${!L:-""}" ] || L="LOPTA_$_PG_NAME"
+    [ "${!L:-""}" ] || L="__PG_LOPTA_$NAME"
     echo -n  "${!L:-""}"
 }
 
 get_opt_sarg() {
-    local _PG_NAME="$1"
-    local L="ARG_SOPTA_$_PG_NAME" 
+    local NAME="$1"
+    local L="__PG_ARG_SA_$NAME" 
     
     echo -n "${!L:-""}"
 }
 
 get_opt_larg() {
-    local _PG_NAME="$1"
-    local L="ARG_LOPTA_$_PG_NAME" 
+    local NAME="$1"
+    local L="__PG_ARG_LA_$NAME" 
     
     echo -n "${!L:-""}"
 }
 
 get_opt_type() {
-	local _PG_NAME="$1"
-	local T="TYPE_$_PG_NAME"
+	local NAME="$1"
+	local T="__PG_TYPE_$NAME"
 
 	echo -n "${!T:-""}"
 }
 
 get_opt_range() {
-	local _PG_NAME="$1"
-	local R="RANGE_$_PG_NAME"
+	local NAME="$1"
+	local R="__PG_RANGE_$NAME"
 
 	echo -n "${!R:-""}"
 }
 
 get_opt_desc() {
-    local _PG_NAME="$1"
-    local L="DESC_OPT_$_PG_NAME" 
+    local NAME="$1"
+    local L="__PG_DESC_OPT_$NAME" 
     
     echo -n "${!L:-""}"
-	local _PG_TYPE=$(get_opt_type "$_PG_NAME")
-	[ "x$_PG_TYPE" = x ] || {
-		echo -n ". Must be of type '$_PG_TYPE'"
-		local _PG_RANGE=$(get_opt_range "$_PG_NAME")
-		[ "x$_PG_RANGE" = x ] || {
-			case "$_PG_TYPE" in
+	local TYPE=$(get_opt_type "$NAME")
+	[ "x$TYPE" = x ] || {
+		echo -n ". Must be of type '$TYPE'"
+		local RANGE=$(get_opt_range "$NAME")
+		[ "x$RANGE" = x ] || {
+			case "$TYPE" in
 				s|S)
-					echo -n " fitting regex '$_PG_RANGE'."
+					echo -n " fitting regex '$RANGE'."
 					;;
 				*)
-					echo -n " in the range '$_PG_RANGE'."
+					echo -n " in the range '$RANGE'."
 					;;
 			esac
 		}
@@ -289,16 +290,16 @@ get_opt_desc() {
 }
 
 del_opt() {
-    local _PG_NAME
-    for _PG_NAME in "$@"; do
-        for PRE in SOPT_ SOPTA_ LOPT_ LOPTA_ DESC_OPT_ ARG_LOPTA_ ARG_SOPTA_ TYPE_ RANGE_; do
-            local N=$PRE$_PG_NAME
-            [ "${!N:-""}" ] && unset $PRE$_PG_NAME
+    local NAME
+    for NAME in "$@"; do
+        for PRE in __PG_SOPT_ __PG_SOPTA_ __PG_LOPT_ __PG_LOPTA_ __PG_DESC_OPT_ __PG_ARG_LA_ __PG_ARG_SA_ __PG_TYPE_ __PG_RANGE_; do
+            local N=$PRE$NAME
+            [ "${!N:-""}" ] && unset $PRE$NAME
         done
         local OPT_LIST
         OPT_LIST=""
-        for OPT in $__PG_OPTION_LIST; do
-            [ $OPT = $_PG_NAME ] || OPT_LIST="$OPT_LIST $OPT"
+        for OPT in ${__PG_OPTION_LIST:-""}; do
+            [ $OPT = $NAME ] || OPT_LIST="$OPT_LIST $OPT"
         done
         __PG_OPTION_LIST="$OPT_LIST"
     done
@@ -306,15 +307,15 @@ del_opt() {
 
 # prints only short options that take no parameter
 print_short_flags() {
-    local _PG_NAME
+    local NAME
     local FLAGS=""
 
-    for _PG_NAME in $__PG_OPTION_LIST; do
-        local _PG_DESC=$(get_opt_desc $_PG_NAME)
-        [ "$_PG_DESC" ] || continue
-        local L=$(get_opt_letter $_PG_NAME)
+    for NAME in ${__PG_OPTION_LIST:-""}; do
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local L=$(get_opt_letter $NAME)
         [ "$L" ] || continue
-        local A=$(get_opt_sarg $_PG_NAME)
+        local A=$(get_opt_sarg $NAME)
         [ "$A" ] && continue
         FLAGS="$FLAGS$L"
     done
@@ -323,16 +324,16 @@ print_short_flags() {
 
 # prints only long options that take no parameter
 print_long_flags() {
-    local _PG_NAME
+    local NAME
     local FLAGS=""
     local SPACE=""
 
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        local _PG_DESC=$(get_opt_desc $_PG_NAME)
-        [ "$_PG_DESC" ] || continue
-        local L=$(get_opt_string $_PG_NAME)
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local L=$(get_opt_string $NAME)
         [ "$L" ] || continue
-        local A=$(get_opt_larg $_PG_NAME)
+        local A=$(get_opt_larg $NAME)
         [ "$A" ] && continue
         printf -- "$SPACE--%s" $L
         SPACE=" "
@@ -344,13 +345,13 @@ print_long_flags() {
 print_short_args() {
     local MAN=$1
 
-    local _PG_NAME
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        local _PG_DESC=$(get_opt_desc $_PG_NAME)
-        [ "$_PG_DESC" ] || continue
-        SARG=$(get_opt_sarg "$_PG_NAME")
+    local NAME
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local SARG=$(get_opt_sarg "$NAME")
         [ "$SARG" ] || continue
-        SOPT=$(get_opt_letter "$_PG_NAME")
+        local SOPT=$(get_opt_letter "$NAME")
         [ "$MAN" ] && FMT='[\\fB\-%s\\fP \\fI%s\\fP]' || FMT="[-%s <%s>]"
         printf -- "$FMT" $SOPT $SARG
     done
@@ -361,13 +362,13 @@ print_short_args() {
 print_long_args() {
     local MAN=$1
 
-    local _PG_NAME
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        local _PG_DESC=$(get_opt_desc $_PG_NAME)
-        [ "$_PG_DESC" ] || continue
-        LARG=$(get_opt_larg "$_PG_NAME")
+    local NAME
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local LARG=$(get_opt_larg "$NAME")
         [ "$LARG" ] || continue
-        LOPT=$(get_opt_string "$_PG_NAME")
+        local LOPT=$(get_opt_string "$NAME")
         [ "$MAN" ] && FMT='[\\fB\-\-%s\\fP=\\fI%s\\fP]' || FMT="[--%s=<%s>]"
         printf -- "$FMT" $LOPT $LARG
     done
@@ -377,16 +378,16 @@ print_long_args() {
 print_all_args() {
     local MAN=${1:-""}
 
-    local _PG_NAME
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        local _PG_DESC=$(get_opt_desc $_PG_NAME)
-        [ "$_PG_DESC" ] || continue
-        SARG=$(get_opt_sarg "$_PG_NAME")
-        LARG=$(get_opt_larg "$_PG_NAME")
+    local NAME
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        local DESC=$(get_opt_desc $NAME)
+        [ "$DESC" ] || continue
+        local SARG=$(get_opt_sarg "$NAME")
+        local LARG=$(get_opt_larg "$NAME")
         [ "$SARG$LARG" ] || continue
 
-        SOPT=$(get_opt_letter "$_PG_NAME")
-        LOPT=$(get_opt_string "$_PG_NAME")
+        local SOPT=$(get_opt_letter "$NAME")
+        local LOPT=$(get_opt_string "$NAME")
 
         echo -n " ["
         [ "$MAN" ] && FMT='\\fB\-%s\\fP \\fI%s\\fP' || FMT="-%s <%s>"
@@ -400,48 +401,48 @@ print_all_args() {
 
 # print the help line for all options
 print_all_opts() {
-    local _PG_NAME
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        print_opt $_PG_NAME
+    local NAME
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        __GPG_print_opt $NAME
     done
 }
 
 # print the option line for a man page
-print_opt_man() {
-    local _PG_NAME="$1"
+__GPG_print_opt_man() {
+    local NAME="$1"
     local L
-    local _PG_DESC
+    local DESC
     local SOPT
     local LOPT
     local SARG
     local LARG
 
-    _PG_DESC=$(get_opt_desc $_PG_NAME)
-    [ "$_PG_DESC" ] || return 0
-    SOPT=$(get_opt_letter $_PG_NAME)
-    LOPT=$(get_opt_string $_PG_NAME)
-    SARG=$(get_opt_sarg $_PG_NAME)
-    LARG=$(get_opt_larg $_PG_NAME)
+    DESC=$(get_opt_desc $NAME)
+    [ "$DESC" ] || return 0
+    SOPT=$(get_opt_letter $NAME)
+    LOPT=$(get_opt_string $NAME)
+    SARG=$(get_opt_sarg $NAME)
+    LARG=$(get_opt_larg $NAME)
 
     echo ".TP"
     echo -n ".B "
     # NB 'echo -n "-E"' swallows the -E!! and it has no --
     [ "$SOPT" ] && printf -- '\\fB\-%s\\fP' $SOPT
     [ "$SOPT" ] && [ "$SARG" ] && echo -n " \\fI$SARG\\fR"
-    if [ "$__PG_LONG_GETOPT" ]; then
+    if [ "$__GPG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && echo -n ", "
         [ "$LOPT" ] && printf -- '\\fB\-\-%s\\fP' $LOPT
         [ "$LOPT" ] && [ "$LARG" ] && echo -n "\\fI=$LARG\\fR"
     fi
     echo
-    echo "$_PG_DESC"
+    echo "$DESC"
 }
 
 # Create a skeleton man page - uses these parameters if defined:
 # USAGE
 # ARGUMENTS
 # SHORT_DESC
-print_man_page() {
+__GPG_print_man_page() {
     FLAGS=$(print_short_flags)
     [ "$FLAGS" ] && FLAGS='
 .RB "[" \-'$FLAGS' "]"'
@@ -470,9 +471,9 @@ Foobar foobar foobar
 .SH OPTIONS
 EOF
 
-    local _PG_NAME
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        print_opt_man $_PG_NAME
+    local NAME
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        __GPG_print_opt_man $NAME
     done
 
     cat <<EOF
@@ -507,11 +508,11 @@ EOF
 }
 
 add_std_opts() {
-    add_opt HELP "print this help and exit" $HELP_option "" $HELP_loption
-    add_opt VERSION "print version and exit" $VERSION_option "" "$VERSION_loption"
-    add_opt VERBOSE "do it verbosely" $VERBOSE_option "" "$VERBOSE_loption"
-    add_opt QUIET "do it quietly (negates -$VERBOSE_option)" $QUIET_option "" "$QUIET_loption"
-    add_opt PRINT_MAN_PAGE "" "" "" "$PRINTMAN_loption"
+    add_opt HELP "print this help and exit" $__GPG_HELP_option "" $__GPG_HELP_loption
+    add_opt VERSION "print version and exit" $__GPG_VERSION_option "" "$__GPG_VERSION_loption"
+    add_opt VERBOSE "do it verbosely" $__GPG_VERBOSE_option "" "$__GPG_VERBOSE_loption"
+    add_opt QUIET "do it quietly (negates -$__GPG_VERBOSE_option)" $__GPG_QUIET_option "" "$__GPG_QUIET_loption"
+    add_opt PRINT_MAN_PAGE "" "" "" "$__GPG_PRINTMAN_loption"
     add_opt END_OPTIONS "explicitly ends the options" "-"
 }
 
@@ -529,24 +530,24 @@ call_getopt() {
     local OPT
     local TEMP
 
-    for OPT in ${!SOPT_*}; do
+    for OPT in ${!__PG_SOPT_*}; do
         [ "${!OPT}" = "-" ] && continue # special case of '--'
         SHORT_OPTIONS="$SHORT_OPTIONS${!OPT}"
     done
-    for OPT in ${!SOPTA_*}; do 
+    for OPT in ${!__PG_SOPTA_*}; do 
         SHORT_OPTIONS_ARG="$SHORT_OPTIONS_ARG${!OPT}:"
     done
-    for OPT in ${!LOPT_*}; do 
+    for OPT in ${!__PG_LOPT_*}; do 
         [ "$LONG_OPTIONS" ] && LONG_OPTIONS="$LONG_OPTIONS,"
         LONG_OPTIONS="$LONG_OPTIONS${!OPT}"
     done
-    for OPT in ${!LOPTA_*}; do 
+    for OPT in ${!__PG_LOPTA_*}; do 
         [ "$LONG_OPTIONS_ARG" ] && LONG_OPTIONS_ARG="$LONG_OPTIONS_ARG,"
         LONG_OPTIONS_ARG="$LONG_OPTIONS_ARG${!OPT}:"
     done
 
     [ "$STOP_ON_FIRST_NON_OPT" ] && STOP_EARLY="+"
-    if [ "$__PG_LONG_GETOPT" ]; then
+    if [ "${__GPG_LONG_GETOPT:-''}" ]; then
         local SHORT_ARGS=""
         local LONG_ARGS=""
         [ -n "$SHORT_OPTIONS$SHORT_OPTIONS_ARG" ] && SHORT_ARGS="-o $STOP_EARLY$SHORT_OPTIONS$SHORT_OPTIONS_ARG"
@@ -560,31 +561,31 @@ call_getopt() {
     echo "$TEMP"
 }
 
-print_opt() {
-    local _PG_NAME="$1"
+__GPG_print_opt() {
+    local NAME="$1"
     local L
     local N
-    local _PG_DESC
+    local DESC
     local SOPT
     local LOPT
     local SARG
     local LARG
 
-    _PG_DESC=$(get_opt_desc $_PG_NAME)
-    [ "$_PG_DESC" ] || return 0
-    SOPT=$(get_opt_letter $_PG_NAME)
-    LOPT=$(get_opt_string $_PG_NAME)
-    SARG=$(get_opt_sarg $_PG_NAME)
-    LARG=$(get_opt_larg $_PG_NAME)
+    DESC=$(get_opt_desc $NAME)
+    [ "$DESC" ] || return 0
+    SOPT=$(get_opt_letter $NAME)
+    LOPT=$(get_opt_string $NAME)
+    SARG=$(get_opt_sarg $NAME)
+    LARG=$(get_opt_larg $NAME)
 
     LINE=""
-    for (( N=0 ; ${#LINE} < __PG_SHORT_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
+    for (( N=0 ; ${#LINE} < __GPG_SHORT_OPT_COL ; N++ )) ; do LINE="$LINE " ; done
     [ "$SOPT" ] && LINE="${LINE}-$SOPT"
     [ "$SOPT" ] && [ "$SARG" ] && LINE="${LINE} $SARG"
-    if [ "$__PG_LONG_GETOPT" ]; then
+    if [ "$__GPG_LONG_GETOPT" ]; then
         [ "$SOPT" ] && [ "$LOPT" ] && LINE="$LINE, "
         if [ "$LOPT" ]; then
-            [ "$SOPT" ] && LONG_START=${LONG_COL_OPT:-""} || LONG_START=$__PG_SHORT_OPT_COL
+            [ "$SOPT" ] && LONG_START=${LONG_COL_OPT:-""} || LONG_START=$__GPG_SHORT_OPT_COL
             for (( N=0 ; ${#LINE} < LONG_START ; N++ )); do 
                 LINE="$LINE "
             done
@@ -593,24 +594,24 @@ print_opt() {
         fi
     fi
     LINE="$LINE "
-    while (( ${#LINE} < _PG_OPT_DOC_COL - 1)) ; do LINE="$LINE " ; done
+    while (( ${#LINE} < __GPG_OPT_DOC_COL - 1)) ; do LINE="$LINE " ; done
     # NB 'echo "-E"' swallows the -E!! and it has no -- so use printf
     printf -- "%s" "$LINE"
     
     FIRST="FIRST_yes"
-    if (( ${#LINE} >= _PG_OPT_DOC_COL )); then
+    if (( ${#LINE} >= __GPG_OPT_DOC_COL )); then
         echo
         FIRST=""
     fi
-    local WIDTH=$(( __PG_RMARGIN - _PG_OPT_DOC_COL ))
+    local WIDTH=$(( __GPG_RMARGIN - __GPG_OPT_DOC_COL ))
     if ! type fmt &> /dev/null || [ "$WIDTH" -lt 10 ]; then
-        printf -- "%s\n" "$_PG_DESC"
+        printf -- "%s\n" "$DESC"
         return 0
     fi
 
     export __PG_INDENT=""
-    while (( ${#__PG_INDENT} < _PG_OPT_DOC_COL - 1)); do __PG_INDENT="$__PG_INDENT "; done
-    echo "$_PG_DESC" |fmt -w "$WIDTH" -s | { 
+    while (( ${#__PG_INDENT} < __GPG_OPT_DOC_COL - 1)); do __PG_INDENT="$__PG_INDENT "; done
+    echo "$DESC" |fmt -w "$WIDTH" -s | { 
         while read L; do 
             [ "$FIRST" ] || 
             echo -n "$__PG_INDENT"; FIRST=""; printf -- "%s\n" "$L"
@@ -620,7 +621,7 @@ print_opt() {
 }
 
 # honour GNU ARGP_HELP_FMT parameter
-load_help_fmt() {
+__GPG_load_help_fmt() {
     [ "${ARGP_HELP_FMT:-""}" ] || return 0
     OFS="$IFS"
     IFS=','
@@ -629,19 +630,19 @@ load_help_fmt() {
     while [ "$1" ]; do
         case "$1" in
             short-opt-col*)
-                __PG_SHORT_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
+                __GPG_SHORT_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
                 shift
                 ;;
             long-opt-col*)
-                __PG_LONG_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
+                __GPG_LONG_OPT_COL=$(echo "$1"|cut -d'=' -f 2)
                 shift
                 ;;
             opt-doc-col*)
-                _PG_OPT_DOC_COL=$(echo "$1"|cut -d'=' -f 2)
+                __GPG_OPT_DOC_COL=$(echo "$1"|cut -d'=' -f 2)
                 shift
                 ;;
             rmargin*)
-                __PG_RMARGIN=$(echo "$1"|cut -d'=' -f 2)
+                __GPG_RMARGIN=$(echo "$1"|cut -d'=' -f 2)
                 shift
                 ;;
             *)
@@ -651,13 +652,13 @@ load_help_fmt() {
     done
 }
 
-default_usage() {
+__GPG_default_usage() {
     local FLAGS=$(print_short_flags)
     [ "$FLAGS" ] && FLAGS="[-$FLAGS]"
     local LFLAGS=$(print_long_flags)
     [ "$LFLAGS" ] && LFLAGS=" [$LFLAGS]"
     local ARGS=$(print_all_args)
-    local FMT="fmt -w $__PG_COLUMNS -s"
+    local FMT="fmt -w $_GPG_COLUMNS -s"
     type fmt &> /dev/null || FMT=cat
     echo "Usage: $PROG $FLAGS$LFLAGS$ARGS ${ARGUMENTS:-""}" |$FMT
     echo
@@ -667,19 +668,19 @@ default_usage() {
     print_all_opts
 }
 
-check_type_and_value() {
+__GPG_check_type_and_value() {
 	local VALUE="$1"
-	local _PG_TYPE="$2"
-	local _PG_RANGE="$3"
+	local TYPE="$2"
+	local RANGE="$3"
 
 	# just using 'while' for the sake of the 'break':
-	while [ "$_PG_TYPE" ]; do
-		case "$_PG_TYPE" in
+	while [ "$TYPE" ]; do
+		case "$TYPE" in
 			i|I)
-				echo "$VALUE" | egrep -q "$_PG_INT_REGEX" || break
-				[ "x$_PG_RANGE" = x ] || {
-					local LOWER=$(echo "$_PG_RANGE" | cut -d- -f1)
-					local UPPER=$(echo "$_PG_RANGE" | cut -d- -f2)
+				echo "$VALUE" | egrep -q "$__GPG_INT_REGEX" || break
+				[ "x$RANGE" = x ] || {
+					local LOWER=$(echo "$RANGE" | cut -d- -f1)
+					local UPPER=$(echo "$RANGE" | cut -d- -f2)
 					[[ "$LOWER" && "$VALUE" -lt "$LOWER" ]] && break
 					[[ "$UPPER" && "$VALUE" -gt "$UPPER" ]] && break
 				}
@@ -687,9 +688,9 @@ check_type_and_value() {
 				;;
 			r|R|f|F)
 				echo "$VALUE" | egrep -q "$FLOAT_REGEX" || break
-				[ "x$_PG_RANGE" = x ] || {
-					local LOWER=$(echo "$_PG_RANGE" | cut -d- -f1)
-					local UPPER=$(echo "$_PG_RANGE" | cut -d- -f2)
+				[ "x$RANGE" = x ] || {
+					local LOWER=$(echo "$RANGE" | cut -d- -f1)
+					local UPPER=$(echo "$RANGE" | cut -d- -f2)
 					[ "$LOWER" ] && {
 						awk "BEGIN {if ($VALUE < $LOWER) {exit 1} else {exit 0}}" || break
 					}
@@ -700,14 +701,14 @@ check_type_and_value() {
 				return 0
 				;;
 			s|S)
-				[ "x$_PG_RANGE" = x ] || {
-					echo "$VALUE" | egrep -q "$_PG_RANGE" || break
+				[ "x$RANGE" = x ] || {
+					echo "$VALUE" | egrep -q "$RANGE" || break
 				}
 				return 0
 				;;
 			a|A)
 				local VAL
-				for VAL in $_PG_RANGE; do
+				for VAL in $RANGE; do
 					[ "$VAL" = "$VALUE" ] && return 0
 				done
 				break
@@ -716,16 +717,16 @@ check_type_and_value() {
 	done
 
 	(
-		echo -n "$PROG: value '$VALUE' given for option '$_PG_NAME' must be of type '$_PG_TYPE'"
-		[ "x$_PG_RANGE" = x ] || {
-			case "$_PG_TYPE" in
+		echo -n "$PROG: value '$VALUE' given for option '$NAME' must be of type '$TYPE'"
+		[ "x$RANGE" = x ] || {
+			case "$TYPE" in
 				s|S)
-					echo -n " and must fit REGEX '$_PG_RANGE'"
+					echo -n " and must fit REGEX '$RANGE'"
 					;;
 				a|A)
-					echo -n " and must be one of these values: $_PG_RANGE"
+					echo -n " and must be one of these values: $RANGE"
 					;;
-				i|I|f|F) echo -n " and in range '$_PG_RANGE'"
+				i|I|f|F) echo -n " and in range '$RANGE'"
 					;;
 			esac
 		}
@@ -738,30 +739,30 @@ process_opts() {
     local SHIFT_NUM=0
     while true; do
         case "${1:-""}" in
-        -$HELP_option | --$HELP_loption) 
-            usage 2>/dev/null || default_usage
+        -$__GPG_HELP_option | --$__GPG_HELP_loption) 
+            usage 2>/dev/null || __GPG_default_usage
             exit 0
             ;;
 
-        -$VERSION_option | --$VERSION_loption) 
+        -$__GPG_VERSION_option | --$__GPG_VERSION_loption) 
             echo "$PROG: version $VERSION"
             exit 0 
             ;;
 
-        -$VERBOSE_option | --$VERBOSE_loption) 
+        -$__GPG_VERBOSE_option | --$__GPG_VERBOSE_loption) 
             VERBOSE="VERBOSE_yes"
             ((SHIFT_NUM++))
             shift
             ;;
 
-        -$QUIET_option | --$QUIET_loption) 
+        -$__GPG_QUIET_option | --$__GPG_QUIET_loption) 
             VERBOSE=""
             ((SHIFT_NUM++))
             shift
             ;;
 
-        --$PRINTMAN_loption)
-            print_man_page
+        --$__GPG_PRINTMAN_loption)
+            __GPG_print_man_page
             exit 0
             ;;
 
@@ -771,26 +772,26 @@ process_opts() {
             ;;
             
         *) 
-            local _PG_NAME=$(get_opt_name "$1")
-            if [ -z "$_PG_NAME" ]; then
+            local NAME=$(get_opt_name "$1")
+            if [ -z "$NAME" ]; then
                 echo "$PROG: process-getopt: process_opts: no function for option \"$1\"" >&2
                 exit 1
             fi
 
-			local _PG_TYPE=$(get_opt_type "$_PG_NAME")
-			[ "$_PG_TYPE" ] && {
+			local TYPE=$(get_opt_type "$NAME")
+			[ "$TYPE" ] && {
 				local VALUE="$2"
-				local _PG_RANGE=$(get_opt_range "$_PG_NAME")
-				check_type_and_value "$2" "$_PG_TYPE" "$_PG_RANGE"
+				local RANGE=$(get_opt_range "$NAME")
+				__GPG_check_type_and_value "$2" "$TYPE" "$RANGE"
 			}
-            $_PG_NAME$FUNC_SUFFIX "$1" "$2"; local STAT=$?
+            $NAME$__GPG_FUNC_SUFFIX "$1" "$2"; local STAT=$?
             shift
             ((SHIFT_NUM++))
             [ "$STAT" -eq 127 ] && exit 0 # no such function
             
             # now let's adjust for options with args:
-            local SA="ARG_SOPTA_$_PG_NAME"
-            local LA="ARG_LOPTA_$_PG_NAME"
+            local SA="__PG_ARG_SA_$NAME"
+            local LA="__PG_ARG_LA_$NAME"
             if [ "${!SA:-""}${!LA:-""}" ]; then
                 shift
                 ((SHIFT_NUM++))
@@ -798,31 +799,32 @@ process_opts() {
             ;;
         esac
     done
+    #clean_process_getopt
     return $SHIFT_NUM
 }
 
 get_opt_name() {
     # returns the name for an option letter or word
     local OPT="$1" # an option eg -c or --foobar
-    local _PG_NAME
-    for _PG_NAME in $__PG_OPTION_LIST; do 
-        local L=LOPT_$_PG_NAME
-        local LA=LOPTA_$_PG_NAME
-        local S=SOPT_$_PG_NAME
-        local SA=SOPTA_$_PG_NAME
+    local NAME
+    for NAME in ${__PG_OPTION_LIST:-""}; do 
+        local L=__PG_LOPT_$NAME
+        local LA=__PG_LOPTA_$NAME
+        local S=__PG_SOPT_$NAME
+        local SA=__PG_SOPTA_$NAME
         if  [ "--${!L:-""}" = "$OPT" ] || \
             [ "--${!LA:-""}" = "$OPT" ] || \
             [ "-${!S:-""}" = "$OPT" ] || \
             [ "-${!SA:-""}" = "$OPT" ]; then
-            echo "${_PG_NAME}"
+            echo "${NAME}"
             return 0
         fi
     done
     return 1
 }
 
-__PG_VERSION="2.0"
-__PG_STANDALONE=""
+__GPG_VERSION="2.0"
+__GPG_STANDALONE=""
 STOP_ON_FIRST_NON_OPT=${STOP_ON_FIRST_NON_OPT:-""}
 # First some safety checks:
 [ "$PROG" ] || { 
@@ -833,9 +835,9 @@ STOP_ON_FIRST_NON_OPT=${STOP_ON_FIRST_NON_OPT:-""}
     fi
     # Otherwise, we're running as a standalone - perhaps to get the
     # version or help
-    VERSION=$__PG_VERSION
-    usage() { process_getopt_usage; }
-    __PG_STANDALONE="__PG_STANDALONE_yes"
+    VERSION=$__GPG_VERSION
+    usage() { __PG_process_getopt_usage; }
+    __GPG_STANDALONE="__GPG_STANDALONE_yes"
 }
 
 [ "$VERSION" ] || { 
@@ -843,39 +845,39 @@ STOP_ON_FIRST_NON_OPT=${STOP_ON_FIRST_NON_OPT:-""}
     exit 1
 }
 
-__PG_COLUMNS=`tput cols 2>/dev/null` || __PG_COLUMNS=80
-((__PG_COLUMNS--))
+_GPG_COLUMNS=`tput cols 2>/dev/null` || _GPG_COLUMNS=80
+((_GPG_COLUMNS--))
 
 __PG_OPTION_LIST=""
-__PG_LONG_GETOPT=""
+__GPG_LONG_GETOPT=""
 # decide if this getopt supports long options:
 { 
     getopt --test &>/dev/null; __PG_STAT=$? 
 } || : 
-[ $__PG_STAT -eq 4 ] && __PG_LONG_GETOPT="__PG_LONG_GETOPT_yes"
+[ $__PG_STAT -eq 4 ] && __GPG_LONG_GETOPT="__GPG_LONG_GETOPT_yes"
 
-HELP_loption="help"
-HELP_option="h"
-VERBOSE_loption="verbose"
-VERBOSE_option="v"
-QUIET_option="q"
-QUIET_loption="quiet"
-VERSION_loption="version"
-VERSION_option="V"
-PRINTMAN_loption="print-man-page"
-FUNC_SUFFIX="_func"
+__GPG_HELP_loption="help"
+__GPG_HELP_option="h"
+__GPG_VERBOSE_loption="verbose"
+__GPG_VERBOSE_option="v"
+__GPG_QUIET_option="q"
+__GPG_QUIET_loption="quiet"
+__GPG_VERSION_loption="version"
+__GPG_VERSION_option="V"
+__GPG_PRINTMAN_loption="print-man-page"
+__GPG_FUNC_SUFFIX="_func"
 
-__PG_SHORT_OPT_COL=2
-__PG_LONG_OPT_COL=6
-_PG_OPT_DOC_COL=29
-__PG_RMARGIN=79
+__GPG_SHORT_OPT_COL=2
+__GPG_LONG_OPT_COL=6
+__GPG_OPT_DOC_COL=29
+__GPG_RMARGIN=79
 
-_PG_INT_REGEX="[+-]*[[:digit:]]+"
-_PG_INT_RANGE_REGEX="$_PG_INT_REGEX-$_PG_INT_REGEX"
-_PG_FLOAT_REGEX="[+-]*[[:digit:]]+(\\.[[:digit:]]+)*"
-_PG_FLOAT_RANGE_REGEX="$_PG_FLOAT_REGEX-$_PG_FLOAT_REGEX"
+__GPG_INT_REGEX="[+-]*[[:digit:]]+"
+__GPG_INT_RANGE_REGEX="$__GPG_INT_REGEX-$__GPG_INT_REGEX"
+__GPG_FLOAT_REGEX="[+-]*[[:digit:]]+(\\.[[:digit:]]+)*"
+__GPG_FLOAT_RANGE_REGEX="$__GPG_FLOAT_REGEX-$__GPG_FLOAT_REGEX"
 # FIXME: this needs a few tweaks:
-_PG_URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*/[^[:space:]]*"
+__GPG_URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*/[^[:space:]]*"
 
 # stubs to satisfy add_opt on standard opts:
 HELP_func() { :; }
@@ -885,16 +887,16 @@ VERSION_func() { :; }
 PRINT_MAN_PAGE_func() { :; }
 END_OPTIONS_func() { :; }
 
-load_help_fmt
+__GPG_load_help_fmt
 
-[ "$__PG_RMARGIN" -gt "$__PG_COLUMNS" ] && __PG_RMARGIN=$__PG_COLUMNS
+[ "$__GPG_RMARGIN" -gt "$_GPG_COLUMNS" ] && __GPG_RMARGIN=$_GPG_COLUMNS
 
 # normally, this is called without args - but we can also respond to
 # normal options too!
-[ "$__PG_STANDALONE" ] && {
+[ "$__GPG_STANDALONE" ] && {
     add_std_opts
-    TEMP=$(call_getopt "$@") || exit 1
-    eval set -- "$TEMP"
+    __PG_TEMP=$(call_getopt "$@") || exit 1
+    eval set -- "$__PG_TEMP"
     process_opts "$@"
     shift "$?"
 }
