@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.31 2011/04/21 01:21:30 bhepple Exp $
+# $Id: process-getopt,v 1.32 2011/04/26 18:55:33 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -93,34 +93,38 @@ process_getopt_version() {
 }
 
 add_opt() {
+    # We need to be scrupulous here - because we're a callback, we see
+    # all the caller's parameters - so we must namespace them all
+    # (even if 'local') to stand a chance of not overwriting theirs!!!
     # parameters: use "" as the placeholder for a missing arg
-    local NAME DESC SOPT SARG LOPT LARG TYPE RANGE
-    NAME="$1" # name of the option - essential
-    DESC="$2" # essential except for 'silent/secret' options
-    SOPT="${3:-""}" # short option letter - optional
-    SARG="${4:-""}" # argument label for the short option - optional
-    LOPT="${5:-""}" # long option - optional
-    LARG="${6:-""}" # argument label for the long option - optional
-    TYPE="${7:-""}" # type of the argument - optional
-    RANGE="${8:-""}" # range for the argument - optional
-    local A
-    local L
-    local ALLOWED_CHARS='[a-zA-Z0-9_][a-zA-Z0-9_]*'
-    local OPT
+    local __PG_NAME __PG_DESC __PG_SOPT __PG_SARG __PG_LOPT __PG_LARG __PG_TYPE __PG_RANGE
+    __PG_NAME="$1" # name of the option - essential
+    __PG_DESC="$2" # essential except for 'silent/secret' options
+    __PG_SOPT="${3:-""}" # short option letter - optional
+    __PG_SARG="${4:-""}" # argument label for the short option - optional
+    __PG_LOPT="${5:-""}" # long option - optional
+    __PG_LARG="${6:-""}" # argument label for the long option - optional
+    __PG_TYPE="${7:-""}" # type of the argument - optional
+    __PG_RANGE="${8:-""}" # range for the argument - optional
+    local __PG_HAS_ARGS
+    local __PG_L
+    local __PG_ALLOWED_CHARS='[a-zA-Z0-9_][a-zA-Z0-9_]*'
+    local __PG_OPT
+    local __PG_SUFFIX
 
-    [ "$NAME" ] || { 
+    [ "$__PG_NAME" ] || { 
         echo "$PROG: process-getopt: add_opt requires a name" >&2
         exit 1
     }
-    # [[ "$NAME" =~ $ALLOWED_CHARS ]] || { ... this needs bash-3
-    [ `echo $NAME |tr -d '[:alnum:]' |tr -d '[_]'` ] && {
-        echo "$PROG: process-getopt: apt_opt: NAME (\"$NAME\") must obey the regexp $ALLOWED_CHARS" >&2
+    # [[ "$__PG_NAME" =~ $__PG_ALLOWED_CHARS ]] || { ... this needs bash-3
+    [ `echo $__PG_NAME |tr -d '[:alnum:]' |tr -d '[_]'` ] && {
+        echo "$PROG: process-getopt: apt_opt: __PG_NAME (\"$__PG_NAME\") must obey the regexp $__PG_ALLOWED_CHARS" >&2
         exit 1
     }
 
     # check at least a short or a long option is given:
-    [ "$SOPT$LOPT" ] || {
-        echo "$PROG: process-getopt: add_opt: option $NAME needs a short or a long option" >&2
+    [ "$__PG_SOPT$__PG_LOPT" ] || {
+        echo "$PROG: process-getopt: add_opt: option $__PG_NAME needs a short or a long option" >&2
         exit 1
     }
 
@@ -128,99 +132,99 @@ add_opt() {
     # it is supposed to do nothing - but if it is undefined then we get
     # error 127:
     local STAT=0
-    ${NAME}$__GPG_FUNC_SUFFIX 2>/dev/null || STAT=$?
+    ${__PG_NAME}$__GPG_FUNC_SUFFIX 2>/dev/null || STAT=$?
     if [ $STAT -eq 127 ]; then
-        echo "$PROG: process-getopt: option $NAME has no helper function $NAME$__GPG_FUNC_SUFFIX" >&2
+        echo "$PROG: process-getopt: option $__PG_NAME has no helper function $__PG_NAME$__GPG_FUNC_SUFFIX" >&2
         exit 1
     fi
 
     # force args to be consistent:
-    [ "$LOPT" ] && [ ! "$LARG" ] && LARG="$SARG"
-    [ "$SOPT" ] && [ ! "$SARG" ] && SARG="$LARG"
+    [ "$__PG_LOPT" ] && [ ! "$__PG_LARG" ] && __PG_LARG="$__PG_SARG"
+    [ "$__PG_SOPT" ] && [ ! "$__PG_SARG" ] && __PG_SARG="$__PG_LARG"
 
-    [ "$SARG$LARG" ] && A="A" || A=""
+    [ "$__PG_SARG$__PG_LARG" ] && __PG_HAS_ARGS="A" || __PG_HAS_ARGS=""
 
     # check it's not already in use
-    for OPT in ${__PG_OPTION_LIST:-""}; do 
-        if [ "$NAME" = "$OPT" ]; then
-            echo "$PROG: process-getopt: option name \"$NAME\" is already in use" >&2
+    for __PG_OPT in ${__PG_OPTION_LIST:-""}; do 
+        if [ "$__PG_NAME" = "$__PG_OPT" ]; then
+            echo "$PROG: process-getopt: option name \"$__PG_NAME\" is already in use" >&2
             exit 1
         fi
         # check it's not already in use - cover the case of with and
         # without args:
-        if [ "$SOPT" ]; then
-            for SUFFIX in "" "A"; do
-                L="__PG_SOPT${SUFFIX}_$OPT"
-                if [ "$SOPT" = "${!L:-""}" ]; then
-                    echo "$PROG: process-getopt: short option \"$SOPT\" is already in use by \
-$OPT" >&2
+        if [ "$__PG_SOPT" ]; then
+            for __PG_SUFFIX in "" "A"; do
+                __PG_L="__PG_SOPT${__PG_SUFFIX}_$__PG_OPT"
+                if [ "$__PG_SOPT" = "${!__PG_L:-""}" ]; then
+                    echo "$PROG: process-getopt: short option \"$__PG_SOPT\" is already in use by \
+$__PG_OPT" >&2
                     exit 1
                 fi
             done
         fi
-        if [ "$LOPT" ]; then
-            for SUFFIX in "" "A"; do
-                L="__PG_LOPT${SUFFIX}_$OPT"
-                if [ "$LOPT" = "${!L:-""}" ]; then
-                    echo "$PROG: process-getopt: long option \"$LOPT\" is already in use by $OPT" >&2
+        if [ "$__PG_LOPT" ]; then
+            for __PG_SUFFIX in "" "A"; do
+                __PG_L="__PG_LOPT${__PG_SUFFIX}_$__PG_OPT"
+                if [ "$__PG_LOPT" = "${!__PG_L:-""}" ]; then
+                    echo "$PROG: process-getopt: long option \"$__PG_LOPT\" is already in use by $__PG_OPT" >&2
                     exit 1
                 fi
             done
         fi
     done
 
-    if [ "$SOPT" ]; then
-        [ ${#SOPT} -ne 1 ] && {
-            echo "$PROG: process-getopt: short option \"$SOPT\" for option $NAME is not a single character" >&2
+    if [ "$__PG_SOPT" ]; then
+        [ ${#__PG_SOPT} -ne 1 ] && {
+            echo "$PROG: process-getopt: short option \"$__PG_SOPT\" for option $__PG_NAME is not a single character" >&2
             exit 1
         }
-        export __PG_SOPT${A}_$NAME="$SOPT"
-        [ "$SARG" ] && export __PG_ARG_SA_$NAME="$SARG"
+        export __PG_SOPT${__PG_HAS_ARGS}_$__PG_NAME="$__PG_SOPT"
+        [ "$__PG_SARG" ] && export __PG_ARG_SA_$__PG_NAME="$__PG_SARG"
     fi
 
-    if [ "$LOPT" ]; then
-        export __PG_LOPT${A}_$NAME="$LOPT"
-        [ "$LARG" ] && export __PG_ARG_LA_$NAME="$LARG"
+    if [ "$__PG_LOPT" ]; then
+        export __PG_LOPT${__PG_HAS_ARGS}_$__PG_NAME="$__PG_LOPT"
+        [ "$__PG_LARG" ] && export __PG_ARG_LA_$__PG_NAME="$__PG_LARG"
     fi
 
-    if [ "$DESC" ]; then
-        export __PG_DESC_OPT_$NAME="$DESC"
+    if [ "$__PG_DESC" ]; then
+        export __PG_DESC_OPT_$__PG_NAME="$__PG_DESC"
     fi
 
 	# use a while loop just for the 'break':
-	[ "$SARG$LARG" ] && {
-		while [ "$TYPE" ]; do
-			case "$TYPE" in
+	[ "$__PG_SARG$__PG_LARG" ] && {
+		while [ "$__PG_TYPE" ]; do
+			case "$__PG_TYPE" in
 				i|I)
-					[ "x$RANGE" = x ] && break
-					echo "$RANGE" | egrep -q "$__GPG_INT_RANGE_REGEX" && break
+					[ "x$__PG_RANGE" = x ] && break
+					echo "$__PG_RANGE" | egrep -q "$__GPG_INT_RANGE_REGEX" && break
 					;;
 				r|R|f|F)
-					[ "x$RANGE" = x ] && break
-					echo "$RANGE" | egrep -q "$__GPG_FLOAT_RANGE_REGEX" && break
+					[ "x$__PG_RANGE" = x ] && break
+					echo "$__PG_RANGE" | egrep -q "$__GPG_FLOAT_RANGE_REGEX" && break
 					;;
 				s|S)
-					[ "x$RANGE" = x ] && break
-					echo "" | egrep -q "$RANGE"
+					[ "x$__PG_RANGE" = x ] && break
+					echo "" | egrep -q "$__PG_RANGE"
 					[ $? -eq 2 ] || break
 					;;
 				a|A) 
-					[ "x$RANGE" = x ] || break
+					[ "x$__PG_RANGE" = x ] || break
 					;;
 				u|U)
-					TYPE=s
-					RANGE="$__GPG_URL_REGEX"
+					__PG_TYPE=s
+					__PG_RANGE="$__GPG_URL_REGEX"
 					break
 					;;
 			esac
-			echo "$PROG: process-getopt: bad argument type ('$NAME') or range ('$RANGE') for option '$NAME'." |fmt >&2
+			echo "$PROG: process-getopt: bad argument type ('$__PG_NAME') or range ('$__PG_RANGE') for option '$__PG_NAME'." |fmt >&2
 			exit 1
 		done
 	}
-	export __PG_TYPE_$NAME="$TYPE"
-	export __PG_RANGE_$NAME="$RANGE"
+	export __PG_TYPE_$__PG_NAME="$__PG_TYPE"
+	export __PG_RANGE_$__PG_NAME="$__PG_RANGE"
 
-    __PG_OPTION_LIST="${__PG_OPTION_LIST:-''} $NAME"
+    __PG_OPTION_LIST="${__PG_OPTION_LIST:-""} $__PG_NAME"
 }
 
 get_opt_letter() {
