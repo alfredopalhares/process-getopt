@@ -18,8 +18,9 @@ TOKEN option (-t "token", --token="token")
 LONGONLY option (--long-only="value")
 COUNTED option (-c = 2)
 COMMAND=add
-Usage: command-processor add [-shVvq-] [--add-slot --help --version --verbose
---quiet] add | multiply | frob | bris [ COMMAND_OPTIONS]
+Usage: command-processor add [-shVvq-] [--add-slot --help --version
+--verbose --quiet]
+ add | multiply | frob | bris [ COMMAND_OPTIONS]
 
 do the add thing
 

@@ -19,7 +19,8 @@ test_setup() {
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-Usage: test_body [-hVv] [--help --version --verbose] [-a <arg>,--asda=<argl>]
+Usage: test_body [-hVv] [--help --version --verbose]
+ [-a <arg>,--asda=<argl>]
 
 asda usage
 

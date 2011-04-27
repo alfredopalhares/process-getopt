@@ -30,8 +30,9 @@ test_setup() {
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-Usage: test_body [-bhVv] [--bool --help --version --verbose] [-a
-<arg>,--asda=<argl>] [-s <arg>,--silent=<argl>]
+Usage: test_body [-bhVv] [--bool --help --version --verbose]
+ [-a <arg>,--asda=<argl>]
+ [-s <arg>,--silent=<argl>]
 
 
 

@@ -11,8 +11,8 @@ test_setup() {
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-Usage: boilerplate [-shVv] [--slot --help --version --verbose] [-t
-<n>,--token=<number>] <files>
+Usage: boilerplate [-shVv] [--slot --help --version --verbose]
+ [-t <n>,--token=<number>] <files>
 
 Short description. More detailed description.
 

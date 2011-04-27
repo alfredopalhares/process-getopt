@@ -1,6 +1,6 @@
 test_body() {
     source ../process-getopt
-    ASDA_func() { [ "${1:-""}" ] && ASDA="yes"; }
+    ASDA_func() { [ "${1:-''}" ] && ASDA="yes"; }
     add_opt "ASDA" "asda description" a arg asda argl
     add_std_opts     # define the standard options --help etc:
     TEMP=$(call_getopt "$@") || exit 1
@@ -16,8 +16,8 @@ test_setup() {
     TEST_IGNORE_VALUE=
     TEST_EXP_VAL=0
     cat > $TEST_EXP_STDOUT <<"EOF"
-Usage: test_body [-hVvq-] [--help --version --verbose --quiet] [-a
-<arg>,--asda=<argl>]
+Usage: test_body [-hVvq-] [--help --version --verbose --quiet]
+ [-a <arg>,--asda=<argl>]
 
 
 

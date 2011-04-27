@@ -48,7 +48,9 @@ test_body \-
 .RB "[" \-bhVv "]"
 [
 .B \-\-bool \-\-help \-\-version \-\-verbose
-] [\fB\-a\fP \fIarg\fP,\fB\-\-asda\fP=\fIargl\fP] [\fB\-s\fP \fIarg\fP,\fB\-\-silent\fP=\fIargl\fP] [\fB\-i\fP \fIinteger\fP,\fB\-\-int\fP=\fIinteger\fP]
+] [\fB\-a\fP \fIarg\fP,\fB\-\-asda\fP=\fIargl\fP]
+ [\fB\-s\fP \fIarg\fP,\fB\-\-silent\fP=\fIargl\fP]
+ [\fB\-i\fP \fIinteger\fP,\fB\-\-int\fP=\fIinteger\fP]
 
 .ad b
 .hy 0
