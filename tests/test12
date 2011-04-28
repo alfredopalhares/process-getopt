@@ -1,15 +1,15 @@
 test_body() {
     source ../process-getopt
     BOOL=""
-    BOOL_func() { [ "${1:-""}" ] && BOOL="yes"; }
+    BOOL_func() { [ "${1:-}" ] && BOOL="yes"; }
     add_opt "BOOL" "bool description" b "" bool
 
     ASDA=""
-    ASDA_func() { [ "${1:-""}" ] && ASDA="$2"; }
+    ASDA_func() { [ "${1:-}" ] && ASDA="$2"; }
     add_opt "ASDA" "asda description" a arg asda argl
 
     SILENT=""
-    SILENT_func() { [ "${1:-""}" ] && SILENT="$2"; }
+    SILENT_func() { [ "${1:-}" ] && SILENT="$2"; }
     add_opt "SILENT" "silent description" s arg silent argl
 
     add_std_opts     # define the standard options --help etc:
