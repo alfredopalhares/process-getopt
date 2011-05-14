@@ -1,4 +1,4 @@
-\" $Id: process-getopt.1,v 1.19 2011/04/20 06:24:56 bhepple Exp $
+\" $Id: process-getopt.1,v 1.20 2011/05/14 12:11:59 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt adding help, type and range checking, etc .
@@ -178,7 +178,7 @@ Defaults to
 .B type
 If an 
 .BR arg_name
-is provided then the \fItype\fP will be checked by
+is provided then its \fItype\fP can be specified to
 .BR process-getopt (1)
 as follows:
 .RS 10
@@ -196,15 +196,15 @@ a string
 a url
 .TP
 .BR a
-a list of posible string values separated by spaces
+a list of possible string values separated by spaces
 .RE
 .IP
 .B range
 If a
 .BR type
-is provided then the value will be checked by
+is provided then the value of the argument  will be checked by
 .BR process-getopt (1)
-if
+if the
 .B range
 is set as follows:
 .RS 10
