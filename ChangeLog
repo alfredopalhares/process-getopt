@@ -1,3 +1,6 @@
+2011-04-20    <bhepple@freeshell.org>
+	* Added data types and range checking
+	* Namespace more env parameters and minor bug fixes
 2009-04-11    <bhepple@freeshell.org>
 	* Added regression tests
 2009-04-10    <bhepple@freeshell.org>
