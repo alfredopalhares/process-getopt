@@ -1,4 +1,4 @@
-\" $Id: process-getopt.1,v 1.20 2011/05/14 12:11:59 bhepple Exp $
+\" $Id: process-getopt.1,v 1.21 2011/05/17 23:51:41 bhepple Exp $
 .TH PROCESS-GETOPT 1 \" -*- nroff -*-
 .SH NAME
 process-getopt \- a wrapper around getopt adding help, type and range checking, etc .
@@ -495,6 +495,7 @@ commands which can themselves take options (like
 .BR openssh (1)
 or
 .BR cvs (1)).
+See
 .BR tiny (1)
 in this package for a very simple example.
 .SH "NOTES"
@@ -514,6 +515,11 @@ is designed to be portable to versions of
 .BR getopt (1)
 that do not support long options, although this has not been
 extensively tested.
+.P
+Versions of
+.BR process-getopt (1)
+before 2.0 ignore the 
+.BR type " and " range " fields."
 .SH "BUGS"
 The -V,--verbose and -- options are not very useful when calling
 .BR process-getopt (1)
