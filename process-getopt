@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.34 2011/04/28 06:52:39 bhepple Exp $
+# $Id: process-getopt,v 1.35 2011/05/17 06:55:26 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -888,7 +888,7 @@ __GPG_INT_RANGE_REGEX="$__GPG_INT_REGEX-$__GPG_INT_REGEX"
 __GPG_FLOAT_REGEX="[+-]*[[:digit:]]+(\\.[[:digit:]]+)*"
 __GPG_FLOAT_RANGE_REGEX="$__GPG_FLOAT_REGEX-$__GPG_FLOAT_REGEX"
 # FIXME: this needs a few tweaks:
-__GPG_URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*/[^[:space:]]*"
+__GPG_URL_REGEX="(nfs|http|https|ftp|file)://[[:alnum:]_.-]*[^[:space:]]*"
 
 # stubs to satisfy add_opt on standard opts:
 HELP_func() { :; }
