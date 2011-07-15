@@ -20,7 +20,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: boilerplate,v 1.14 2011/04/20 06:24:56 bhepple Exp $
+# $Id: boilerplate,v 1.15 2011/07/15 18:07:13 bhepple Exp $
 
 # A minimal script that uses process-getopt - pour your content in here
 # where it says  # CUSTOMISE
@@ -29,27 +29,17 @@
 set -eu
 
 check_and_process_opts() {
-    local NO_OPTS TEMP PG
+    local NO_OPTS TEMP
 
     # avoid the overhead of process-getopt if there are no options:
     NO_OPTS="yes"
     for i in "$@"; do
-        case "$i" in
-            -*)
-                NO_OPTS=""
-                break
-                ;;
-            *)
-                [ "${STOP_ON_FIRST_NON_OPT:-""}" ] && break
-                ;;
-        esac
+        [[ "$i" == -* ]] && NO_OPTS="" && break
+        [[ "${STOP_ON_FIRST_NON_OPT:-''}" ]] && break
     done
     [ "$NO_OPTS" ] && return 1
 
-    # source process-getopt:
-    PG=$(type process-getopt |cut -d' ' -f 3)
-    [ "$PG" ] || exit 1
-    source $PG
+    source process-getopt
 
     # define our options: # CUSTOMISE
     SLOT_func()   { [ "${1:-""}" ] && SLOT="yes"; }
@@ -80,7 +70,7 @@ check_and_process_opts() {
 
 PROG=$(basename $0)
 DIR=$(dirname $0)
-VERSION='$Revision: 1.14 $' # CUSTOMISE
+VERSION='$Revision: 1.15 $' # CUSTOMISE
 VERBOSE=""
 ARGUMENTS="<files>" # CUSTOMISE
 SHORT_DESC="Short description. " # CUSTOMISE

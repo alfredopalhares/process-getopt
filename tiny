@@ -20,14 +20,14 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: tiny,v 1.4 2011/04/20 06:24:56 bhepple Exp $
+# $Id: tiny,v 1.5 2011/07/15 18:07:13 bhepple Exp $
 
 PROG=$(basename $0)
-VERSION='$Revision: 1.4 $'
+VERSION='$Revision: 1.5 $'
 USAGE="A tiny example using process-getopt(1)"
 
 # call process-getopt functions to define some options:
-source ./process-getopt
+source process-getopt || exit 1
 
 SLOT=""
 SLOT_func()   { [ "${1:-""}" ] && SLOT="yes"; }      # callback for SLOT option

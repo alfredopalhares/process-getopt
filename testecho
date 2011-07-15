@@ -20,28 +20,14 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: testecho,v 1.6 2011/04/20 06:24:56 bhepple Exp $
+# $Id: testecho,v 1.7 2011/07/15 18:07:13 bhepple Exp $
 
 # A test script for process-getopt - just echos options and args
 
 check_and_process_opts() {
-    local NO_OPTS TEMP PG
+    local TEMP
 
-#    # avoid the overhead of process-getopt if there are no options:
-#    NO_OPTS="yes"
-#    for i in "$@"; do
-#        case "$i" in
-#            -*)
-#                NO_OPTS=""
-#                break
-#                ;;
-#        esac
-#    done
-#    [ "$NO_OPTS" ] && return 1
-
-    PG=$(PATH=".:$PATH:$DIR"; type process-getopt |cut -d' ' -f 3)
-    [ "$PG" ] || exit 1
-    source $PG
+    source ./process-getopt
 
     SLOT_func() { [ "$1" ] && SLOT="yes" && echo VERBOSE=$SOPT_VERBOSE; }
     add_opt SLOT "boolean option" s "" slot 
