@@ -1,3 +1,13 @@
+2011-07-21    <bhepple@freeshell.org>
+	* if the caller defines 'standard' options eg -h then let them
+	take preference rather than treating it as an error.
+	* replace [ with [[ (faster)
+	* Don't enforce a / at the end of a url
+	* More namespacing and assoc. bugs
+	* Improve help and man page readability
+	* Fix a bad bug caused by locals in callback not really being local!
+	* Don't put $Id: ChangeLog,v 1.9 2011/07/20 23:27:32 bhepple Exp $ in man output - it's too hard to test!
+	* Added C versions using argp and g_option_context_parse
 2011-04-20    <bhepple@freeshell.org>
 	* Added data types and range checking
 	* Namespace more env parameters and minor bug fixes

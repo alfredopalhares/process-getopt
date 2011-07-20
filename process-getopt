@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.36 2011/07/15 18:16:36 bhepple Exp $
+# $Id: process-getopt,v 1.37 2011/07/20 23:27:32 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -134,7 +134,7 @@ add_opt() {
     local STAT=0
     ${__PG_NAME}$__GPG_FUNC_SUFFIX 2>/dev/null || STAT=$?
     if [[ $STAT -eq 127 ]]; then
-        echo "$PROG: process-getopt: option $__PG_NAME has no helper function $__PG_NAME$__GPG_FUNC_SUFFIX" >&2
+        echo "$PROG: process-getopt: add_opt: option $__PG_NAME has no helper function $__PG_NAME$__GPG_FUNC_SUFFIX" >&2
         exit 1
     fi
 
@@ -147,7 +147,7 @@ add_opt() {
     # check it's not already in use
     for __PG_OPT in ${__PG_OPTION_LIST:-}; do 
         if [[ "$__PG_NAME" = "$__PG_OPT" ]]; then
-            echo "$PROG: process-getopt: option name \"$__PG_NAME\" is already in use" >&2
+            echo "$PROG: process-getopt: add_opt: option name \"$__PG_NAME\" is already in use" >&2
             exit 1
         fi
         # check that the (short) option letter is not already in use -
@@ -156,7 +156,7 @@ add_opt() {
             for __PG_SUFFIX in "" "A"; do
                 __PG_L="__PG_SOPT${__PG_SUFFIX}_$__PG_OPT"
                 if [[ "$__PG_SOPT" = "${!__PG_L:-}" ]]; then
-                    echo "$PROG: process-getopt: short option \"$__PG_SOPT\" is already in use by \
+                    echo "$PROG: process-getopt: add_opt: short option \"$__PG_SOPT\" is already in use by \
 $__PG_OPT" >&2
                     exit 1
                 fi
@@ -168,7 +168,7 @@ $__PG_OPT" >&2
             for __PG_SUFFIX in "" "A"; do
                 __PG_L="__PG_LOPT${__PG_SUFFIX}_$__PG_OPT"
                 if [[ "$__PG_LOPT" = "${!__PG_L:-}" ]]; then
-                    echo "$PROG: process-getopt: long option \"$__PG_LOPT\" is already in use by $__PG_OPT" >&2
+                    echo "$PROG: process-getopt: add_opt: long option \"$__PG_LOPT\" is already in use by $__PG_OPT" >&2
                     exit 1
                 fi
             done
@@ -177,7 +177,7 @@ $__PG_OPT" >&2
 
     if [[ "$__PG_SOPT" ]]; then
         [[ ${#__PG_SOPT} -ne 1 ]] && {
-            echo "$PROG: process-getopt: short option \"$__PG_SOPT\" for option $__PG_NAME is not a single character" >&2
+            echo "$PROG: process-getopt: add_opt: short option \"$__PG_SOPT\" for option $__PG_NAME is not a single character" >&2
             exit 1
         }
         export __PG_SOPT${__PG_HAS_ARGS}_$__PG_NAME="$__PG_SOPT"
@@ -219,7 +219,7 @@ $__PG_OPT" >&2
 					break
 					;;
 			esac
-			echo "$PROG: process-getopt: bad argument type ('$__PG_NAME') or range ('$__PG_RANGE') for option '$__PG_NAME'." |fmt >&2
+			echo "$PROG: process-getopt: add_opt: bad argument type ('$__PG_NAME') or range ('$__PG_RANGE') for option '$__PG_NAME'." |fmt >&2
 			exit 1
 		done
 	}
@@ -515,10 +515,30 @@ EOF
 }
 
 add_std_opts() {
-    add_opt HELP "print this help and exit" $__GPG_HELP_option "" $__GPG_HELP_loption
-    add_opt VERSION "print version and exit" $__GPG_VERSION_option "" "$__GPG_VERSION_loption"
-    add_opt VERBOSE "do it verbosely" $__GPG_VERBOSE_option "" "$__GPG_VERBOSE_loption"
-    add_opt QUIET "do it quietly (negates -$__GPG_VERBOSE_option)" $__GPG_QUIET_option "" "$__GPG_QUIET_loption"
+    get_opt_name -$__GPG_HELP_option >/dev/null && __GPG_HELP_option=
+    get_opt_name --$__GPG_HELP_loption  >/dev/null && __GPG_HELP_loption=
+    if [[ "$__GPG_HELP_option$__GPG_HELP_loption" ]]; then
+        add_opt HELP "print this help and exit" "$__GPG_HELP_option" "" "$__GPG_HELP_loption"
+    fi
+
+    get_opt_name -$__GPG_VERSION_option  >/dev/null && __GPG_VERSION_option=
+    get_opt_name --$__GPG_VERSION_loption  >/dev/null && __GPG_VERSION_loption=
+    if [[ "$__GPG_VERSION_option$__GPG_VERSION_loption" ]]; then
+        add_opt VERSION "print version and exit" "$__GPG_VERSION_option" "" "$__GPG_VERSION_loption"
+    fi
+
+    get_opt_name -$__GPG_VERBOSE_option >/dev/null  && __GPG_VERBOSE_option=
+    get_opt_name --$__GPG_VERBOSE_loption >/dev/null  && __GPG_VERBOSE_loption=
+    if [[ "$__GPG_VERBOSE_option$__GPG_VERBOSE_loption" ]]; then
+        add_opt VERBOSE "do it verbosely" "$__GPG_VERBOSE_option" "" "$__GPG_VERBOSE_loption"
+    fi
+
+    get_opt_name -$__GPG_QUIET_option >/dev/null  && __GPG_QUIET_option=
+    get_opt_name --$__GPG_QUIET_loption  >/dev/null && __GPG_QUIET_loption=
+    if [[ "$__GPG_QUIET_option$__GPG_QUIET_loption" ]]; then
+        add_opt QUIET "do it quietly" "$__GPG_QUIET_option" "" "$__GPG_QUIET_loption"
+    fi
+
     add_opt PRINT_MAN_PAGE "" "" "" "$__GPG_PRINTMAN_loption"
     add_opt END_OPTIONS "explicitly ends the options" "-"
 }
@@ -750,29 +770,35 @@ process_opts() {
     while true; do
         local __PG_OPTION="${1:-}"
 		local __PG_VALUE="${2:-}"
-        case "$__PG_OPTION" in
-        -$__GPG_HELP_option | --$__GPG_HELP_loption) 
+        if  [[ "$__GPG_HELP_option"  &&  "-$__GPG_HELP_option"  == "$__PG_OPTION" ]] ||
+            [[ "$__GPG_HELP_loption" && "--$__GPG_HELP_loption" == "$__PG_OPTION" ]]; then
             usage 2>/dev/null || __GPG_default_usage
             exit 0
-            ;;
+        fi
 
-        -$__GPG_VERSION_option | --$__GPG_VERSION_loption) 
+        if  [[ "$__GPG_VERSION_option"  &&  "-$__GPG_VERSION_option"  == "$__PG_OPTION" ]] ||
+            [[ "$__GPG_VERSION_loption" && "--$__GPG_VERSION_loption" == "$__PG_OPTION" ]]; then
             echo "$PROG: version $VERSION"
             exit 0 
-            ;;
+        fi
 
-        -$__GPG_VERBOSE_option | --$__GPG_VERBOSE_loption) 
+        if  [[ "$__GPG_VERBOSE_option"  &&  "-$__GPG_VERBOSE_option"  == "$__PG_OPTION" ]] ||
+            [[ "$__GPG_VERBOSE_loption" && "--$__GPG_VERBOSE_loption" == "$__PG_OPTION" ]]; then
             VERBOSE="VERBOSE_yes"
             ((__PG_SHIFT_NUM++))
             shift
-            ;;
+            continue
+        fi
 
-        -$__GPG_QUIET_option | --$__GPG_QUIET_loption) 
+        if  [[ "$__GPG_QUIET_option"  &&  "-$__GPG_QUIET_option"  == "$__PG_OPTION" ]] ||
+            [[ "$__GPG_QUIET_loption" && "--$__GPG_QUIET_loption" == "$__PG_OPTION" ]]; then
             VERBOSE=""
             ((__PG_SHIFT_NUM++))
             shift
-            ;;
+            continue
+        fi
 
+        case "$__PG_OPTION" in
         --$__GPG_PRINTMAN_loption)
             __GPG_print_man_page
             exit 0
