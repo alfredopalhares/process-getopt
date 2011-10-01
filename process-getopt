@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.37 2011/07/20 23:27:32 bhepple Exp $
+# $Id: process-getopt,v 1.38 2011/10/01 23:16:36 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -351,7 +351,7 @@ print_long_flags() {
 print_short_args() {
     local MAN=$1
 
-    local NAME
+    local NAME FMT
     for NAME in ${__PG_OPTION_LIST:-}; do 
         local DESC=$(get_opt_desc $NAME)
         [[ "$DESC" ]] || continue
@@ -368,7 +368,7 @@ print_short_args() {
 print_long_args() {
     local MAN=$1
 
-    local NAME
+    local NAME FMT
     for NAME in ${__PG_OPTION_LIST:-}; do 
         local DESC=$(get_opt_desc $NAME)
         [[ "$DESC" ]] || continue
@@ -384,7 +384,7 @@ print_long_args() {
 print_all_args() {
     local MAN=${1:-}
 
-    local NAME
+    local NAME FMT
     for NAME in ${__PG_OPTION_LIST:-}; do 
         local DESC=$(get_opt_desc $NAME)
         [[ "$DESC" ]] || continue
@@ -882,7 +882,8 @@ STOP_ON_FIRST_NON_OPT=${STOP_ON_FIRST_NON_OPT:-}
     exit 1
 }
 
-_GPG_COLUMNS=`tput cols 2>/dev/null` || _GPG_COLUMNS=80
+_GPG_COLUMNS=`tput cols`
+[[ -z "$_GPG_COLUMNS" || "$_GPG_COLUMNS" -lt 60 || "$_GPG_COLUMNS" -gt 5000 ]] && _GPG_COLUMNS=80
 ((_GPG_COLUMNS--))
 
 __PG_OPTION_LIST=""
@@ -907,7 +908,7 @@ __GPG_FUNC_SUFFIX="_func"
 __GPG_SHORT_OPT_COL=2
 __GPG_LONG_OPT_COL=6
 __GPG_OPT_DOC_COL=29
-__GPG_RMARGIN=79
+__GPG_RMARGIN=_GPG_COLUMNS
 
 __GPG_INT_REGEX="[+-]*[[:digit:]]+"
 __GPG_INT_RANGE_REGEX="$__GPG_INT_REGEX-$__GPG_INT_REGEX"
