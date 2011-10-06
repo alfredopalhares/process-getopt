@@ -19,7 +19,7 @@
 # http://process-getopt.sourceforge.net
 # http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
 
-# $Id: process-getopt,v 1.38 2011/10/01 23:16:36 bhepple Exp $
+# $Id: process-getopt,v 1.39 2011/10/06 10:21:21 bhepple Exp $
 
 # A wrapper around getopt.
 
@@ -882,7 +882,7 @@ STOP_ON_FIRST_NON_OPT=${STOP_ON_FIRST_NON_OPT:-}
     exit 1
 }
 
-_GPG_COLUMNS=`tput cols`
+_GPG_COLUMNS=`tput cols 2>/dev/null`
 [[ -z "$_GPG_COLUMNS" || "$_GPG_COLUMNS" -lt 60 || "$_GPG_COLUMNS" -gt 5000 ]] && _GPG_COLUMNS=80
 ((_GPG_COLUMNS--))
 
