@@ -1,7 +1,7 @@
 test_body() {
     unset PROG # otherwise it doesn't run 'standalone'
-    ../process-getopt -h
-    ../process-getopt --version
+    ../src/process-getopt -h
+    ../src/process-getopt --version
     return $?
 }
 

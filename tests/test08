@@ -1,5 +1,5 @@
 test_body() {
-    source ../process-getopt
+    source ../src/process-getopt
     ASDA_func() { [ "${1:-""}" ] && ASDA="yes"; }
     add_opt "ASDA" "asda description" a arg asda argl
     return $?

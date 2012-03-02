@@ -1,7 +1,7 @@
 test_body() {
     STOP_ON_FIRST_NON_OPT="yes"
 
-    source ../process-getopt
+    source ../src/process-getopt
     BOOL=""
     BOOL_func() { [ "${1:-""}" ] && BOOL="yes"; }
     add_opt "BOOL" "bool description" b "" bool

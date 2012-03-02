@@ -39,7 +39,7 @@ check_and_process_opts() {
     done
     [ "$NO_OPTS" ] && return 1
 
-    source process-getopt
+    source ../../src/process-getopt
 
     # define our options: # CUSTOMISE
     SLOT_func()   { [ "${1:-""}" ] && SLOT="yes"; }

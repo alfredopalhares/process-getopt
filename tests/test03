@@ -1,6 +1,6 @@
 test_body() {
     set -eux
-    source ../process-getopt
+    source ../src/process-getopt
     return $?
 }
 

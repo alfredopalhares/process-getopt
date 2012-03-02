@@ -1,5 +1,5 @@
 test_body() {
-    (cd ..; PATH=$(pwd):$PATH; bash ./command-processor $@)
+    (cd ..; PATH=$(pwd):$PATH; bash ./doc/examples/command-processor $@)
     return $?
 }
 

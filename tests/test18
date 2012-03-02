@@ -1,6 +1,6 @@
 test_body() {
     ARGP_HELP_FMT="short-opt-col=3,long-opt-col=8,opt-doc-col=32,rmargin=75"
-    source ../process-getopt
+    source ../src/process-getopt
     BOOL=""
     BOOL_func() { [ "${1:-""}" ] && BOOL="yes"; }
     add_opt "BOOL" "bool description" b "" bool

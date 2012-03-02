@@ -1,5 +1,5 @@
 test_body() {
-    (cd ..; sh ./tiny $@)
+    (cd ..; sh ./doc/examples/tiny $@)
     return $?
 }
 

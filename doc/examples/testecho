@@ -27,7 +27,7 @@
 check_and_process_opts() {
     local TEMP
 
-    source ./process-getopt
+    source ../../src/process-getopt
 
     SLOT_func() { [ "$1" ] && SLOT="yes" && echo VERBOSE=$SOPT_VERBOSE; }
     add_opt SLOT "boolean option" s "" slot 

@@ -38,7 +38,7 @@ check_and_process_opts() {
     done
     [ "$NO_OPTS" ] && return 1
 
-    source process-getopt || exit 1
+    source ../../src/process-getopt || exit 1
 
     # These are the option helper functions that are called in response to
     # an option being found on the command line. They are called by

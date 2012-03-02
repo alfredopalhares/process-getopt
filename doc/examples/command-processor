@@ -38,7 +38,7 @@ check_and_process_opts() {
     done
     [ "$NO_OPTS" ] && return 1
 
-    source process-getopt
+    source ../../src/process-getopt
 
     # option helper functions:
     SLOT_func() { [ "${1:-""}" ] && SLOT="yes"; }
