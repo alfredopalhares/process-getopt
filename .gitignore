@@ -1,0 +1,5 @@
+# Temp files
+*~
+*swp
+# Data output of the tests
+test/data/*
