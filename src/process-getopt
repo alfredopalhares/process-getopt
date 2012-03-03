@@ -19,9 +19,7 @@ __PG_process_getopt_usage() {
     echo
     echo "Normally sourced by other scripts rather than run by itself."
     echo "See the man page for details of functions that $PROG provides."
-    echo "See http://sourceforge.net/projects/process-getopt"
-    echo "See http://process-getopt.sourceforge.net"
-    echo "See http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt"
+    echo "See https://github.com/masterkorp/process-getopt"
     echo "When called without options, does nothing. Otherwise:"
     echo
     echo "Options:"
