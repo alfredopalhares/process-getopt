@@ -6,18 +6,19 @@ Process-getopt
 Process-getopt is a library that warps getopts to make like much easier when handling with command-line arguments.
 
 It buys you:
-* all the goodness of getopt
-* define options in one central place together with descriptions. 
-* fewer 'magic' and duplicated values in your code
-* Better consistency between the getopt calling parameters, the case
-* statement processing the user's options and the help/man pages
-* less spaghetti in your own code
-* easier to maintain
-* help-page and man-page printing - all from the same data sources
-* checking of option consistency at runtime
-* range checking of option values at runtime
-* pretty easy to use
-* portable to OS's without long option support - the help page adapts too
+
+- all the goodness of getopt
+- define options in one central place together with descriptions. 
+- fewer 'magic' and duplicated values in your code
+- Better consistency between the getopt calling parameters, the case
+- statement processing the user's options and the help/man pages
+- less spaghetti in your own code
+- easier to maintain
+- help-page and man-page printing - all from the same data sources
+- checking of option consistency at runtime
+- range checking of option values at runtime
+- pretty easy to use
+- portable to OS's without long option support - the help page adapts too
 
 ### Documentation
 
