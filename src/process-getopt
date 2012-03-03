@@ -1,51 +1,5 @@
-# -*- shell-script -*-
-# Copyright 2008-2011 Bob Hepple
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-
-# http://sourceforge.net/projects/process-getopt
-# http://process-getopt.sourceforge.net
-# http://bhepple.freeshell.org/oddmuse/wiki.cgi/process-getopt
-
 # $Id: process-getopt,v 1.39 2011/10/06 10:21:21 bhepple Exp $
 
-# A wrapper around getopt.
-
-# It buys you:
-# o all the goodness of getopt
-# o define options in one central place together with descriptions. 
-# o fewer 'magic' and duplicated values in your code
-# o Better consistency between the getopt calling parameters, the case
-#   statement processing the user's options and the help/man pages
-# o less spaghetti in your own code
-# o easier to maintain
-# o help-page and man-page printing - all from the same data sources
-# o checking of option consistency at runtime
-# o range checking of option values at runtime
-# o pretty easy to use
-# o portable to OS's without long option support - the help page
-#   adapts too
-
-# It's easier to see it in an example than to read an explanation, so
-# look at boilerplate first, and then see the man page
-# process-getopt(1).
-
-# tested on bash-2.04
-# Certainly would not work on plain old sh, csh, ksh ... .
-
-# try and write this test to be legal in sh/bash-1.x:
 __PG_GOOD_ENOUGH=""
 if [ "x$BASH_VERSION" = "x" -o "x$BASH_VERSINFO" = "x" ]; then
     :
