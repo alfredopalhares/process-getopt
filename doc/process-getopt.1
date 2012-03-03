@@ -554,9 +554,3 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-\" For emacs:
-\" Local Variables:
-\" eval:(setq filename (substring buffer-file-name (string-match "[-a-zA-Z0-9_.]+$" buffer-file-name)))
-\" eval:(setq basename (substring filename 0 (string-match "\\." filename)))
-\" eval:(setq compile-command (concat "groff -man -Tps " filename " | ps2pdf - " basename ".pdf"))
-\" End:
